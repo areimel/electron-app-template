@@ -54,16 +54,18 @@ export function Dropdown<T extends string | number>(p: Props<T>) {
         onKeyDown={(e) => { if (!open && e.key === "ArrowDown") { e.preventDefault(); e.stopPropagation(); show(); } }}>
         {p.icon && <Icon name={p.icon} />}
         {p.buttonText && <span className="dropdown-text">{p.buttonText}</span>}
+        {p.buttonText && <Icon name="chevronDown" size={14} />}
       </button>
       {open && (
-        <ul className="dropdown-menu" role="listbox" aria-label={p.label} ref={menu} onKeyDown={onMenuKey}>
+        <ul className={`dropdown-menu ${p.placement === "above" ? "is-above" : ""}`.trim()} role="listbox" aria-label={p.label} ref={menu} onKeyDown={onMenuKey}>
           {p.options.map((o, i) => {
             const on = o.value === p.selected;
             return (
               <li key={String(o.value)} role="option" aria-selected={on} tabIndex={-1}
-                className={`list-row ${on ? "is-selected is-current" : ""}`}
+                className={`dropdown-item ${on ? "is-selected" : ""}`.trim()}
                 onMouseEnter={() => setActive(i)} onClick={() => choose(o.value)}>
                 {o.label}
+                {on && <span className="dropdown-item-check"><Icon name="check" size={16} /></span>}
               </li>
             );
           })}

@@ -22,8 +22,8 @@ export function ToastHost({ items, onDismiss }: { items: ToastItem[]; onDismiss(
   return (
     <div className="toast-host" aria-live="polite">
       {items.map((t) => (
-        <div key={t.id} className={`toast toast-${t.kind}`}>
-          {t.message}
+        <div key={t.id} className={`toast toast-${t.kind}`} role={t.kind === "error" ? "alert" : undefined}>
+          <span>{t.message}</span>
           {t.action && <button type="button" className="btn btn-link" onClick={() => { t.action?.run(); onDismiss(t.id); }}>{t.action.label}</button>}
         </div>
       ))}

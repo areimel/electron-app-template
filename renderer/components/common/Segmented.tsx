@@ -21,7 +21,7 @@ export function Segmented<T>({ options, value, label, onChange }: Props<T>) {
     const d = DELTA[e.key];
     if (d === undefined || e.ctrlKey || e.metaKey || e.altKey) return;
     e.preventDefault();
-    e.stopPropagation(); // arrows must not also seek/change volume
+    e.stopPropagation(); // arrows must not also reach window-level shortcuts
     const n = options.length;
     const next = (Math.max(current, 0) + d + n) % n;
     onChange(options[next].value);

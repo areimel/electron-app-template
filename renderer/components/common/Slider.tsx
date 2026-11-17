@@ -42,7 +42,7 @@ export function Slider({ value, min = 0, max, step, keyStep, buffered = 0, label
     }[e.key];
     if (to === undefined) return;
     e.preventDefault();
-    e.stopPropagation(); // keep window-level player shortcuts (arrows seek) out of this
+    e.stopPropagation(); // keep window-level app shortcuts out of this
     onChange(fit(to));
   };
 

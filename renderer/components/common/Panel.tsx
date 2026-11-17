@@ -7,7 +7,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   dismissOutside?: boolean;
 }
 
-/** Floating shell shared by the info, effects and queue panels. Position it via className. */
+/** Floating surface for menus and side panels. Position it via className. */
 export function Panel({ onDismiss, dismissOutside = false, className = "", ...rest }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, () => onDismiss?.(), { enabled: !!onDismiss, outside: dismissOutside });

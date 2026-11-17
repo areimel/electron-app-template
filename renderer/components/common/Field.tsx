@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Label + control + hint row. Placeholder until builder C restyles it. */
+/** A label, a control and an optional hint. Pass `htmlFor` when the control has an id. */
 export function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: ReactNode }) {
   return (
     <div className="field">

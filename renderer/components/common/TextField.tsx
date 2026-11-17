@@ -5,10 +5,10 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
   type?: "text" | "search" | "number";
 };
 
-/** Placeholder until builder C restyles it. */
-export function TextField({ label, hideLabel, value, onChange, onEnter, ...rest }: Props) {
+/** A single-line input with its label. `hideLabel` keeps the label for assistive tech only. */
+export function TextField({ label, hideLabel, value, onChange, onEnter, className, ...rest }: Props) {
   return (
-    <label className="text-field">
+    <label className={`text-field ${className ?? ""}`.trim()}>
       <span className={hideLabel ? "visually-hidden" : "text-field-label"}>{label}</span>
       <input {...rest} value={value} onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { rest.onKeyDown?.(e); if (e.key === "Enter") onEnter?.(); }} />

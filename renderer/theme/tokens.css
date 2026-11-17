@@ -38,4 +38,8 @@
 }
 
 :root[data-mode="light"] { color-scheme: light; }
-:root[data-mode="dark"] { color-scheme: dark; }
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  /* On a dark sheet the shadow is darker than the ground; a light one would read as a glow. */
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.4);
+}
