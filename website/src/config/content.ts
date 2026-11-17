@@ -46,31 +46,25 @@ export const screenshots: Record<
   { src: string; width: number; height: number; alt: string; caption: string }
 > = {
   home: {
-    // Real file: images/home.webp, 1440x900 WebP of the main menu.
-    // Intended alt: "The App Template main menu: a ruled list of eight demo apps."
-    src: "images/placeholder.svg",
+    src: "images/home.webp",
     width: 1440,
     height: 900,
-    alt: "Placeholder for a screenshot of the main menu",
-    caption: "Placeholder: the main menu, a ruled sheet index of the eight demos.",
+    alt: "The App Template main menu: a ruled list of eight demo apps.",
+    caption: "The main menu: a ruled sheet index of the eight demos.",
   },
   notes: {
-    // Real file: images/notes.webp, 1440x900 WebP of the Notes demo.
-    // Intended alt: "The Notes demo with a note list, a search field and an open note."
-    src: "images/placeholder.svg",
+    src: "images/notes.webp",
     width: 1440,
     height: 900,
-    alt: "Placeholder for a screenshot of the Notes demo",
-    caption: "Placeholder: the Notes demo.",
+    alt: "The Notes demo with a note list, a search field and an open note.",
+    caption: "The Notes demo: a list, search and an autosaving editor.",
   },
   themes: {
-    // Real file: images/themes.webp, 1440x900 WebP of the Settings theme editor.
-    // Intended alt: "The Settings theme editor showing the Blueprint, Graphite and Kraft themes and an accent colour picker."
-    src: "images/placeholder.svg",
+    src: "images/themes.webp",
     width: 1440,
     height: 900,
-    alt: "Placeholder for a screenshot of the Settings theme editor",
-    caption: "Placeholder: the Settings theme editor.",
+    alt: "The Settings theme editor showing the Blueprint, Graphite and Kraft themes and an accent colour picker.",
+    caption: "Settings: three themes, light and dark, and an accent colour.",
   },
 };
 
