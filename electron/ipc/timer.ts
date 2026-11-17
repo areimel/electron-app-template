@@ -1,17 +1,10 @@
 import { MAX_LABEL, MAX_MINUTES, MIN_MINUTES } from "../../shared/ipc/timer";
 import { dispatchTimer, getTimer, registerTimerLifecycle } from "../features/timer";
-import { handle, type Check } from "./handle";
-import { IpcArgError, v } from "./validate";
-
-const minutes = v.int(MIN_MINUTES, MAX_MINUTES);
-const label = v.string({ max: MAX_LABEL });
+import { handle } from "./handle";
+import { v } from "./validate";
 
 /** The one object argument: { minutes, label }. */
-const startArgs: Check<{ minutes: number; label: string }> = (x, at) => {
-  if (typeof x !== "object" || x === null) throw new IpcArgError(at, "an object with minutes and label");
-  const o = x as Record<string, unknown>;
-  return { minutes: minutes(o.minutes, `${at}.minutes`), label: label(o.label, `${at}.label`) };
-};
+const startArgs = v.object({ minutes: v.int(MIN_MINUTES, MAX_MINUTES), label: v.string({ max: MAX_LABEL }) });
 
 export function register(): void {
   handle("timer:get", v.none, () => getTimer());

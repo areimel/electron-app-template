@@ -5,7 +5,7 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 import { brand } from "../../shared/brand";
 import type { MediaFile } from "../../shared/ipc/player";
-import { isMediaExtension, mimeForName, UNSUPPORTED_MESSAGE } from "../../renderer/apps/player/playerModel";
+import { isMediaExtension, mimeForName, UNSUPPORTED_MESSAGE } from "../../shared/mediaTypes";
 import { parseRange } from "./mediaRange";
 
 /**

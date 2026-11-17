@@ -20,6 +20,8 @@ export const v: {
   bool: Check<boolean>;
   oneOf<T extends string>(values: readonly T[]): Check<T>;
   nullable<T>(c: Check<T>): Check<T | null>;
+  /** A plain object with exactly these fields, each checked. Other keys are dropped from the result. */
+  object<S extends Record<string, Check<unknown>>>(shape: S): Check<{ [K in keyof S]: ReturnType<S[K]> }>;
   recordId: Check<string>;            // isRecordId
   collection: Check<CollectionName>;  // key of COLLECTIONS
   raw: Check<unknown>;                // only for payloads that go straight into a heal()
@@ -48,6 +50,11 @@ export const v: {
   oneOf: <T extends string>(values: readonly T[]): Check<T> => (x, at) =>
     typeof x === "string" && (values as readonly string[]).includes(x) ? (x as T) : bad(at, `one of ${values.join(", ")}`),
   nullable: (c) => (x, at) => (x === null ? null : c(x, at)),
+  object: <S extends Record<string, Check<unknown>>>(shape: S): Check<{ [K in keyof S]: ReturnType<S[K]> }> => (x, at) => {
+    if (typeof x !== "object" || x === null || Array.isArray(x)) return bad(at, `an object with ${Object.keys(shape).join(", ")}`);
+    const o = x as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(shape).map(([k, check]) => [k, check(o[k], `${at}.${k}`)])) as { [K in keyof S]: ReturnType<S[K]> };
+  },
   recordId: (x, at) => (isRecordId(x) ? x : bad(at, "a record id")),
   collection: (x, at) =>
     typeof x === "string" && Object.hasOwn(COLLECTIONS, x) ? (x as CollectionName) : bad(at, "a collection name"),

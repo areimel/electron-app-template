@@ -28,6 +28,13 @@ describe("v checks", () => {
     expect(v.nullable(v.int(0, 9))(4, at)).toBe(4);
     expect(() => v.nullable(v.int(0, 9))("4", at)).toThrow(IpcArgError);
   });
+  it("object: checks each field, names it, and drops other keys", () => {
+    const check = v.object({ n: v.int(1, 5), label: v.string({ max: 3 }) });
+    expect(check({ n: 2, label: "ab", extra: true }, at)).toEqual({ n: 2, label: "ab" });
+    expect(() => check({ n: 9, label: "ab" }, at)).toThrow(/#1\.n/);
+    expect(() => check({ n: 2 }, at)).toThrow(/#1\.label/);
+    for (const x of [null, undefined, "x", 4, [1, 2]]) expect(() => check(x, at)).toThrow(IpcArgError);
+  });
   it("recordId: 16 lowercase hex", () => {
     expect(v.recordId("0123456789abcdef", at)).toBe("0123456789abcdef");
     for (const x of ["0123456789ABCDEF", "short", "0123456789abcdef0", 5, undefined]) {

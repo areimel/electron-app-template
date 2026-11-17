@@ -1,6 +1,6 @@
 import { app } from "electron";
 import { brand } from "../../shared/brand";
-import { MEDIA_EXTENSIONS } from "../../renderer/apps/player/playerModel";
+import { MEDIA_EXTENSIONS } from "../../shared/mediaTypes";
 import { pickOpenFile } from "../features/files";
 import { clearServed, serveOnly, servedFileExists } from "../features/media";
 import { setPreventSleep } from "../features/powerSave";

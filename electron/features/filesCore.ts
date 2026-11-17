@@ -20,11 +20,38 @@ export function decodeText(buf: Uint8Array, maxBytes: number): string {
   }
 }
 
-/** Display-only folder text: the home directory shows as "~". Never accepted back from the renderer. */
+export const FOLDER_DISPLAY_MAX = 40;
+
+/**
+ * Shortens a folder path to `max` characters by dropping middle segments: `~/…/deep/leaf`. The first segment
+ * and as many of the last ones as fit stay. A last segment that is itself too long is cut at its start.
+ */
+export function elideMiddle(dir: string, max = FOLDER_DISPLAY_MAX): string {
+  if (dir.length <= max) return dir;
+  const sep = dir.includes("/") ? "/" : "\\";
+  const parts = dir.split(sep);
+  const head = parts[0] === "" ? sep : `${parts[0]}${sep}`;   // "/" for an absolute path, "~/" or "C:\\" otherwise
+  const tail: string[] = [];
+  let used = head.length + 2;                                   // the head and "…" plus its separator
+  for (let i = parts.length - 1; i > 0; i--) {
+    const next = used + parts[i].length + 1;
+    if (next > max && tail.length > 0) break;
+    tail.unshift(parts[i]);
+    used = next;
+  }
+  const rest = tail.join(sep);
+  if (head.length + 2 + rest.length > max) return `…${rest.slice(-(max - 1))}`;
+  return `${head}…${sep}${rest}`;
+}
+
+/**
+ * Display-only folder text: the home directory shows as "~" and a long path is elided in the middle.
+ * The renderer gets this short form, never the absolute path, and never sends it back.
+ */
 export function displayFolder(path: string, home: string): string {
   const dir = dirname(path);
-  if (home && (dir === home || dir.startsWith(`${home}/`) || dir.startsWith(`${home}\\`))) return `~${dir.slice(home.length)}`;
-  return dir;
+  const short = home && (dir === home || dir.startsWith(`${home}/`) || dir.startsWith(`${home}\\`)) ? `~${dir.slice(home.length)}` : dir;
+  return elideMiddle(short);
 }
 
 /** Bounded two-way map between random file ids and paths. The renderer only ever holds the id. */
