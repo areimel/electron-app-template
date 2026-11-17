@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import type { AppDefinition } from "../types";
+import { PLAYER_COMMANDS } from "./playerModel";
 
 export const player: AppDefinition = {
   id: "player",
@@ -7,5 +8,5 @@ export const player: AppDefinition = {
   icon: "player",
   summary: "Custom file protocol and a native video player",
   component: lazy(() => import("./PlayerApp")),
-  commands: [],
+  commands: PLAYER_COMMANDS,
 };
