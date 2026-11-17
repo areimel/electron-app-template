@@ -1,16 +1,29 @@
-#!/usr/bin/env bash
-# Shader Video Player (CRT-TV) installer for Debian, Ubuntu and Pop!_OS on x86_64.
+/**
+ * Text of the install.sh served at <base>/install.sh. Built from the product
+ * config and the install command, so rebranding needs no edits here.
+ * Shell variables are written with String.raw; a literal "${" in the shell
+ * is written as ${D}{ because String.raw cannot escape it.
+ * The previous script also said apt pulls in ffmpeg; that no longer applies, so it is dropped.
+ */
+import { product } from "../config/product";
+
+const D = "$";
+
+export function installScript(command: string): string {
+  const { name, repo, packageName } = product;
+  return String.raw`#!/usr/bin/env bash
+# ${name} installer for Debian, Ubuntu and Pop!_OS on x86_64.
 #
-#   curl -fsSL https://areimel.github.io/shader-video-player/install.sh | bash
+#   ${command}
 #
 # Downloads the newest .deb (pre-releases included) from GitHub Releases, checks it
-# against the release's SHA256SUMS and installs it with apt, which also pulls in ffmpeg.
+# against the release's SHA256SUMS and installs it with apt.
 # Everything runs inside main(), so a download cut off mid-way never runs half a script.
 
 set -euo pipefail
 
-REPO="areimel/shader-video-player"
-PACKAGE="shader-video-player"
+REPO="${repo}"
+PACKAGE="${packageName}"
 TMP_DIR=""  # global: the EXIT trap runs after main() has returned
 
 cleanup() { if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi; }
@@ -48,7 +61,7 @@ main() {
   TMP_DIR="$(mktemp -d)"
   tmp="$TMP_DIR"
   trap cleanup EXIT
-  deb="${deb_url##*/}"
+  deb="${D}{deb_url##*/}"
 
   say "Downloading $deb"
   curl -fL --progress-bar -o "$tmp/$deb" "$deb_url"
@@ -67,10 +80,12 @@ main() {
   $sudo apt-get install -y "$tmp/$deb"
 
   local version
-  version="$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || echo "?")"
-  say "Installed Shader Video Player $version"
+  version="$(dpkg-query -W -f='${D}{Version}' "$PACKAGE" 2>/dev/null || echo "?")"
+  say "Installed ${name} $version"
   echo "    Open it from your app launcher, or run: $PACKAGE"
   echo "    Uninstall with: sudo apt remove $PACKAGE"
 }
 
 main "$@"
+`;
+}
