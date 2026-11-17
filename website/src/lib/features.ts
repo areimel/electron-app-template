@@ -1,5 +1,9 @@
-export const features = [
-  { number: "01", title: "A home for your collection.", copy: "Add your video folders. Browse your library, pick up where you left off, and let the next video roll.", detail: "LOCAL LIBRARY / PLAY QUEUES" },
-  { number: "02", title: "The details stay in your hands.", copy: "Switch audio tracks, adjust playback speed, load subtitles, or go fullscreen. All the everyday comforts are here.", detail: "SUBTITLES / AUDIO / SPEED" },
-  { number: "03", title: "A picture worth keeping.", copy: "Found the perfect combination of glow and grain? Save a PNG of the frame with your effect applied.", detail: "ONE-KEY SCREENSHOTS" },
-];
+// Temporary, removed when the pages move to src/config.
+import { features as content } from "../config/content";
+
+export const features = content.map((f, i) => ({
+  number: String(i + 1).padStart(2, "0"),
+  title: f.title,
+  copy: f.copy,
+  detail: "",
+}));

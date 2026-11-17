@@ -11,18 +11,15 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.7.5
         version: 3.7.5
-      '@fontsource-variable/archivo':
+      '@fontsource/barlow':
         specifier: ^5.3.0
         version: 5.3.0
-      '@fontsource/press-start-2p':
+      '@fontsource/barlow-condensed':
         specifier: ^5.3.0
         version: 5.3.0
       astro:
         specifier: ^7.4.12
         version: 7.4.12(@types/node@26.6.6)(yaml@2.9.1)
-      sharp:
-        specifier: ^0.35.0
-        version: 0.35.5(@types/node@26.6.6)
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.6
@@ -293,11 +290,11 @@ packages:
   '@emnapi/wasi-threads@2.2.0':
     resolution: {integrity: sha512-JP7OYH38Q7+pyTAe14raZHLQIK7BDKbdwji+Xi3pcd/6QkJYQH3SX4wu6EplGrGJWRepoNzedfm0G3B9Z4e9Rw==}
 
-  '@fontsource-variable/archivo@5.3.0':
-    resolution: {integrity: sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g==}
+  '@fontsource/barlow-condensed@5.3.0':
+    resolution: {integrity: sha512-RA7MmIx0v3eQ6Gcf74qLVLOwLB0GpPOzx+eU9iG/AmCnSJGcIWYeU8y6CEMGZ210MGwGg5CZhzLkkvyZdTTk1g==}
 
-  '@fontsource/press-start-2p@5.3.0':
-    resolution: {integrity: sha512-gxWFxdeDglPhEYSwEeooomcaFK8kSQYLQwVxfnOJeYRj2sPEHXjpVtFgEaYfqzOjuAJGrIcJOipu2KY5YkbyuQ==}
+  '@fontsource/barlow@5.3.0':
+    resolution: {integrity: sha512-tGR0y6QObRtKv71MOth44222+mdNFM/ZWFWDV1VLzNbG4oK9PNRlyJzmkck4vHAi9ibHBXgt4SlY51amFP55CA==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -1940,11 +1937,12 @@ snapshots:
       tslib: 2.9.1
     optional: true
 
-  '@fontsource-variable/archivo@5.3.0': {}
+  '@fontsource/barlow-condensed@5.3.0': {}
 
-  '@fontsource/press-start-2p@5.3.0': {}
+  '@fontsource/barlow@5.3.0': {}
 
-  '@img/colour@1.1.0': {}
+  '@img/colour@1.1.0':
+    optional: true
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -2876,6 +2874,7 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 26.6.6
+    optional: true
 
   shiki@4.6.0:
     dependencies:

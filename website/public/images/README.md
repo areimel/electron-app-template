@@ -1,17 +1,31 @@
-# CRT-TV website captures
+# Website images
 
-All screenshots are authentic captures of the current desktop app. The media shown is an ffmpeg-generated SMPTE test pattern; no third-party footage is included. Desktop branding remains unchanged.
+This folder holds the images the site shows and the site's social preview.
 
-- `home.webp`: home menu, folder library, and CRT preset selection; Consumer TV preset.
-- `crt.webp`: Consumer TV (composite) effect applied to test bars, with the current effects panel open.
-- `vhs.webp`: Home recording (SP) VHS effect applied to the same test bars.
+- `placeholder.svg`: stands in for every screenshot slot. It is a plain wireframe, not a picture of the app.
+- Screenshot slots: `src/config/content.ts` (`screenshots`) declares three slots, `home`, `notes` and `themes`. Each one points at `images/placeholder.svg` until a real capture exists.
+- The real files will be `images/home.webp` (main menu), `images/notes.webp` (Notes demo) and `images/themes.webp` (Settings theme editor). Each is 1440 x 900 WebP.
+- `../social.svg` is the source for `../social.png`, the 1200 x 630 image used in link previews.
 
-Images are 1440 × 1080. Original PNGs are available in this working directory. WebP copies use quality 85.
+## Making a screenshot
 
-Capture used a scratch profile under `/tmp/crt-tv-assets/ud`, so no personal library or settings were captured. Because the desktop compositor resized visible windows, final captures used Electron's headless Ozone backend with SwiftShader. This runs the real app shaders and is not a statement about hardware performance.
+Captures come from the desktop app's dev capture harness, which is controlled by `APP_CAPTURE_*` environment variables (see the app's `CLAUDE.md`). Use a throwaway profile so that no personal data is captured. Show only demo content.
 
-Synthetic source:
+1. Start the app with a scratch user-data directory and the capture variables set, so it saves a PNG and quits.
+2. Convert the PNG to WebP:
 
-```sh
-ffmpeg -f lavfi -i 'smptebars=size=1440x1080:rate=30' -t 30 -c:v libx264 -pix_fmt yuv420p Broadcast-test.mp4
+   ```bash
+   cwebp -q 85 capture.png -o images/notes.webp
+   ```
+
+3. Point the matching `src` in `src/config/content.ts` at the new file, and update its `alt` text to describe what the picture shows.
+
+## Social preview
+
+`social.png` is rendered from `social.svg` with Inkscape:
+
+```bash
+inkscape website/public/social.svg --export-type=png --export-filename=website/public/social.png -w 1200 -h 630
 ```
+
+Run it again after editing `social.svg`.

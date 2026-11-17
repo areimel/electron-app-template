@@ -1,18 +1,26 @@
 ---
-import { navigation, site, url } from "../lib/site";
+import { navigation, product, url } from "../config/site";
+import { footer } from "../config/content";
+import TitleBlock from "./TitleBlock.astro";
+interface Props { sheetTitle: string; sheet?: number; sheets?: number; }
+const { sheetTitle, sheet, sheets } = Astro.props;
 ---
-<footer class="container">
-  <div><a class="wordmark" href={url()}>CRT-TV</a><p>Your videos. Back on the tube.</p></div>
-  <nav aria-label="Footer navigation">{navigation.map((item) => <a href={url(item.path)}>{item.label}</a>)}<a href={site.repository}>GitHub ↗</a></nav>
-  <div class="fine"><span>MADE FOR THE LOVE OF THE PICTURE.</span><span>Made by <a href={site.author.url}>{site.author.name}</a> · Linux · Open source · Beta</span></div>
+<footer class="site-footer">
+  <div class="container inner">
+    <div class="info">
+      <nav aria-label={footer.navLabel}>
+        {navigation.map((item) => <a href={url(item.path)}>{item.label}</a>)}
+        <a href={product.repositoryUrl}>{footer.repositoryLabel}</a>
+      </nav>
+      <p class="credit"><a href={product.author.url}>{footer.authorCredit}</a>. {footer.licenseNote}</p>
+    </div>
+    <TitleBlock sheetTitle={sheetTitle} sheet={sheet} sheets={sheets} revision={footer.revision} />
+  </div>
 </footer>
 <style>
-  footer { padding-block: 48px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); }
-  .wordmark { font-size: 25px; font-weight: 850; text-decoration: none; letter-spacing: -1px; }
-  p { color: var(--muted); font-size: 14px; margin-top: 6px; }
-  nav { display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px; }
-  nav a { text-decoration: none; }
-  .fine a { color: inherit; }
-  .fine { width: 100%; display: flex; justify-content: space-between; gap: 20px; color: var(--muted); font: 10px/1.8 monospace; }
-  @media (max-width: 600px) { .fine { flex-direction: column; gap: 8px; } }
+  .site-footer { margin-top: var(--space-9); padding-block: var(--space-6); border-top: var(--line-width) solid var(--line); background: var(--surface); }
+  .inner { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); }
+  nav { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+  .credit { color: var(--text-muted); margin: var(--space-3) 0 0; }
+  @media (max-width: 760px) { .inner { flex-direction: column; align-items: stretch; } }
 </style>
