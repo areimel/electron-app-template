@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_RECENTS, healRecents } from "../electron/recentsShape";
+import { MAX_RECENTS, healRecents } from "../electron/features/recentsShape";
 
 const r = (n: number) => ({ path: `/v/${n}.mp4`, name: `${n}.mp4`, openedAt: 1000 + n });
 

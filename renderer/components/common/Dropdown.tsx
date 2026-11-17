@@ -15,6 +15,8 @@ interface Props<T extends string | number> {
   selected: T;
   buttonText?: string;
   onSelect: (v: T) => void;
+  /** Which side the menu opens on. Default "below". */
+  placement?: "below" | "above";
 }
 
 export function Dropdown<T extends string | number>(p: Props<T>) {

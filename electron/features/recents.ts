@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { basename } from "node:path";
-import type { RecentFile } from "../shared/types";
-import { readJson, writeJson } from "./jsonStore";
+import type { RecentFile } from "./recentsShape";
+import { readJson, writeJson } from "../store/jsonStore";
 import { MAX_RECENTS, healRecents } from "./recentsShape";
 
 const FILE = "recents.json";

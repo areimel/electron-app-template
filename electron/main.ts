@@ -1,7 +1,7 @@
 import { app } from "electron";
-import { registerIpc } from "./ipc";
+import { registerIpc } from "./ipc/index";
 import { buildMenu } from "./menu";
-import { setPreventSleep } from "./powerSave";
+import { setPreventSleep } from "./features/powerSave";
 import { setupDevCapture } from "./devCapture";
 import { createWindow, getWindow } from "./window";
 

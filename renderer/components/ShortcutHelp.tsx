@@ -1,18 +1,16 @@
 import { useEffect, useRef } from "react";
-import { COMMANDS, GROUP_ORDER, type CommandSpec } from "../../shared/commands";
+import { SHELL_COMMANDS, SHELL_GROUPS, keysOf } from "../../shared/commands";
 import { Kbd } from "./common/Kbd";
 import { Panel, PanelHeader } from "./common/Panel";
 import { Button } from "./common/Button";
 
-const keysOf = (c: CommandSpec): string[] => (c.keys?.length ? [...c.keys] : c.accelerator ? [c.accelerator] : []);
-
-/** Modal overlay listing every command with keys, generated from COMMANDS. */
+/** Modal overlay listing every command with keys, generated from SHELL_COMMANDS. */
 export function ShortcutHelp({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { ref.current?.querySelector<HTMLElement>(".shortcut-help")?.focus(); }, []);
 
-  const groups = GROUP_ORDER
-    .map((g) => ({ name: g as string, rows: COMMANDS.filter((c) => c.group === g).map((c) => ({ label: c.label, keys: keysOf(c) })).filter((r) => r.keys.length) }))
+  const groups = SHELL_GROUPS
+    .map((g) => ({ name: g as string, rows: SHELL_COMMANDS.filter((c) => c.group === g).map((c) => ({ label: c.label, keys: keysOf(c) })).filter((r) => r.keys.length) }))
     .filter((g) => g.rows.length);
 
   return (

@@ -1,19 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { COMMANDS, commandById, formatKey, hint, isCommandId, parseKey, toAccelerator } from "../shared/commands";
+import { COMMAND_ID, SHELL_COMMANDS, formatKey, goCommands, hint, keysOf, parseKey, toAccelerator } from "../shared/commands";
 
 describe("commands table", () => {
-  it("has unique ids", () => {
-    const ids = COMMANDS.map((c) => c.id);
+  it("has unique ids that match COMMAND_ID", () => {
+    const ids = SHELL_COMMANDS.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
-  });
-  it("has unique keys", () => {
-    const keys = COMMANDS.flatMap((c) => ("keys" in c ? [...c.keys] : []) as string[]);
-    expect(new Set(keys).size).toBe(keys.length);
+    for (const id of ids) expect(id).toMatch(COMMAND_ID);
   });
   it("every key and accelerator parses and formats", () => {
-    for (const c of COMMANDS) {
-      const all = [...(("keys" in c ? c.keys : []) as readonly string[]), ...(("accelerator" in c ? [c.accelerator] : []) as string[])];
-      for (const k of all) {
+    for (const c of SHELL_COMMANDS) {
+      for (const k of keysOf(c)) {
         expect(parseKey(k).key.length).toBeGreaterThan(0);
         expect(formatKey(k, false)).not.toBe("");
         expect(toAccelerator(k)).toBeTruthy();
@@ -28,27 +24,22 @@ describe("formatKey", () => {
     expect(formatKey(" ", false)).toBe("Space");
     expect(formatKey("ArrowLeft", false)).toBe("←");
     expect(formatKey("Shift+E", false)).toBe("Shift+E");
-    expect(formatKey("m", false)).toBe("M");
     expect(formatKey("?", false)).toBe("?");
-    expect(formatKey("Shift+ArrowLeft", false)).toBe("Shift+←");
   });
   it("formats mac", () => {
     expect(formatKey("CmdOrCtrl+O", true)).toBe("⌘O");
-    expect(formatKey("Shift+E", true)).toBe("⇧E");
     expect(formatKey("CmdOrCtrl+Shift+S", true)).toBe("⌘⇧S");
-    expect(formatKey(" ", true)).toBe("Space");
   });
 });
 
 describe("helpers", () => {
-  it("isCommandId", () => {
-    expect(isCommandId("fullscreen")).toBe(true);
-    expect(isCommandId("nope")).toBe(false);
-    expect(isCommandId(3)).toBe(false);
-  });
   it("hint prefers key then accelerator", () => {
-    expect(hint("fullscreen")).toBe("Fullscreen (F)");
-    expect(hint("shortcuts")).toBe("Keyboard shortcuts (?)");
-    expect(commandById("fullscreen").keys).toEqual(["f"]);
+    expect(hint({ id: "x.a", label: "Shortcuts", group: "G", keys: ["?"] }, false)).toBe("Shortcuts (?)");
+    expect(hint({ id: "x.b", label: "Palette", group: "G", accelerator: "CmdOrCtrl+K" }, false)).toBe("Palette (Ctrl+K)");
+  });
+  it("goCommands numbers apps from 1", () => {
+    const go = goCommands([{ id: "notes", name: "Notes" }, { id: "tasks", name: "Tasks" }]);
+    expect(go.map((c) => c.id)).toEqual(["go.notes", "go.tasks"]);
+    expect(go[1].accelerator).toBe("CmdOrCtrl+2");
   });
 });

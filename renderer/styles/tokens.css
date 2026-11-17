@@ -11,7 +11,7 @@
 
 
   /* type */
-  --font: "Archivo Variable", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font: "Barlow", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-lg: 15px; --fs-xl: 20px; --fs-2xl: 28px;
   --wdth-expanded: 118;
 

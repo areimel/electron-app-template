@@ -1,22 +1,25 @@
 import { app, type BrowserWindow } from "electron";
 import { writeFileSync } from "node:fs";
+import { brand } from "../shared/brand";
+
+const P = brand.envPrefix;
 
 /**
  * Development aid for checking rendering without a person at the screen:
- *   SVP_CAPTURE=/path/out.png   screenshot the window, then quit
- *   SVP_CAPTURE_DELAY=3000      milliseconds to wait before the screenshot
- *   SVP_CAPTURE_KEYS=e,shift+E  keys to press (one per comma) one second after load
- *   SVP_CAPTURE_SIZE=1920x1080  content size of the window
- *   SVP_CAPTURE_EVAL=<js>       expression evaluated in the page just before the screenshot; result is logged
+ *   APP_CAPTURE=/path/out.png   screenshot the window, then quit
+ *   APP_CAPTURE_DELAY=3000      milliseconds to wait before the screenshot
+ *   APP_CAPTURE_KEYS=e,shift+E  keys to press (one per comma) one second after load
+ *   APP_CAPTURE_SIZE=1920x1080  content size of the window
+ *   APP_CAPTURE_EVAL=<js>       expression evaluated in the page just before the screenshot; result is logged
  * Renderer console output is echoed to stdout while capturing.
  */
 export function setupDevCapture(win: BrowserWindow): void {
-  const out = process.env.SVP_CAPTURE;
+  const out = process.env[`${P}_CAPTURE`];
   if (!out || app.isPackaged) return;
-  const delay = Number(process.env.SVP_CAPTURE_DELAY) || 3000;
-  const keys = (process.env.SVP_CAPTURE_KEYS ?? "").split(",").filter(Boolean);
+  const delay = Number(process.env[`${P}_CAPTURE_DELAY`]) || 3000;
+  const keys = (process.env[`${P}_CAPTURE_KEYS`] ?? "").split(",").filter(Boolean);
 
-  const [w, h] = (process.env.SVP_CAPTURE_SIZE ?? "").split("x").map(Number);
+  const [w, h] = (process.env[`${P}_CAPTURE_SIZE`] ?? "").split("x").map(Number);
   if (w > 0 && h > 0) win.setContentSize(w, h);
 
   win.webContents.on("console-message", (e) => console.log(`[renderer:${e.level}] ${e.message}`));
@@ -33,7 +36,7 @@ export function setupDevCapture(win: BrowserWindow): void {
       }
     }, 1000);
     setTimeout(() => {
-      const probe = process.env.SVP_CAPTURE_EVAL;
+      const probe = process.env[`${P}_CAPTURE_EVAL`];
       const evaluated = probe
         ? win.webContents.executeJavaScript(probe).then((r) => console.log(`[eval] ${JSON.stringify(r)}`), (e) => console.log(`[eval error] ${e}`))
         : Promise.resolve();

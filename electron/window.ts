@@ -1,5 +1,6 @@
 import { BrowserWindow, session } from "electron";
 import { join } from "node:path";
+import { brand } from "../shared/brand";
 
 let win: BrowserWindow | null = null;
 
@@ -14,7 +15,7 @@ export function createWindow(onClosed: () => void): BrowserWindow {
 
   win = new BrowserWindow({
     width: 1100, height: 680, minWidth: 480, minHeight: 320,
-    title: "Shader Video Player", backgroundColor: "#17181a",
+    title: brand.name, backgroundColor: "#17181a",
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       contextIsolation: true, nodeIntegration: false, sandbox: true,

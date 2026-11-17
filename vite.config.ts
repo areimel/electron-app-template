@@ -2,8 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
+import { brand } from "./shared/brand";
 
-const csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:";
+const csp = `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src ${brand.mediaScheme}: blob:`;
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf8")) as { version: string; author: string };
 
 export default defineConfig({
@@ -16,10 +17,14 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: "svp-csp",
+      name: "app-csp",
       apply: "build",
       transformIndexHtml: (html) =>
         html.replace("<head>", `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />`),
+    },
+    {
+      name: "app-title",
+      transformIndexHtml: (html) => html.replace(/<title>.*?<\/title>/, `<title>${brand.name}</title>`),
     },
   ],
   build: {

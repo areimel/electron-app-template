@@ -1,5 +1,9 @@
 import { isAbsolute } from "node:path";
-import type { RecentFile } from "../shared/types";
+export interface RecentFile {
+  path: string;
+  name: string;
+  openedAt: number;
+}
 
 export const MAX_RECENTS = 12;
 
