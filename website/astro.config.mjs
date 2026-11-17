@@ -12,5 +12,7 @@ export default defineConfig({
   base: process.env.SITE_BASE || deployDefaults.siteBase,
   output: "static",
   trailingSlash: "always",
+  // No Shiki: its theme paints fixed colours; code blocks use the site tokens (.prose pre).
+  markdown: { syntaxHighlight: false },
   integrations: [sitemap({ filter: (page) => !page.endsWith("/404/") })],
 });
