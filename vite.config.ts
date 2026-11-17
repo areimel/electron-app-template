@@ -5,10 +5,10 @@ import { readFileSync } from "node:fs";
 import { brand } from "./shared/brand";
 
 const csp = `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src ${brand.mediaScheme}: blob:`;
-const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf8")) as { version: string; author: string };
+const pkg = JSON.parse(readFileSync(resolve(import.meta.dirname, "package.json"), "utf8")) as { version: string; author: string };
 
 export default defineConfig({
-  root: resolve(__dirname, "renderer"),
+  root: resolve(import.meta.dirname, "renderer"),
   base: "./",
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
@@ -28,10 +28,10 @@ export default defineConfig({
     },
   ],
   build: {
-    outDir: resolve(__dirname, "dist-renderer"), emptyOutDir: true,
+    outDir: resolve(import.meta.dirname, "dist-renderer"), emptyOutDir: true,
     // The CSP has no data: font-src: never inline font files (small subsets fall under the 4 KB default).
     assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
   },
   server: { port: 5173, strictPort: true },
-  test: { root: resolve(__dirname), include: ["tests/**/*.test.ts"] },
+  test: { root: resolve(import.meta.dirname), include: ["tests/**/*.test.ts"] },
 });

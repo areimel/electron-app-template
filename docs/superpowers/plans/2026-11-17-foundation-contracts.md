@@ -707,3 +707,28 @@ These override anything above that disagrees.
 11. Brand placeholders stay; the README tells the owner to set them.
 
 Working method: every Phase 2 and Phase 3 builder works in its own git worktree and commits on its own branch; the integrator merges. Wave 0 is committed on the main line first.
+
+## 6. As built
+
+Where the built code differs from sections 1 to 5, the code wins. The differences, so a reader of this document is not misled:
+
+1. **`editor:opened` is gone.** A file named by a second instance or at launch is announced by the shell as `app:deep-link` (`appId: "editor"`); the Editor listens for that and calls `editor:take-pending`, which hands over the file once.
+2. **`player:is-open-file-present`** was added (`shared/ipc/player.ts`). After a playback error the Player asks main whether the served file still exists, to tell "the file is gone" from "the format is not supported".
+3. **`hostname` was removed from `SystemInfo`.** The page does not need the machine name, so main no longer sends it.
+4. **`shared/ipc/bridge.ts`** holds the `window.app` bridge types shared by `preload.ts` and `renderer/global.d.ts`.
+5. **Pure cores are split from their Electron shells:** `electron/features/netCore.ts` (host allow-list, URL checks) and `electron/features/filesCore.ts` (extensions, text decoding, `HandleTable`, `displayFolder`), each next to the module that imports `electron`, so vitest can load them.
+6. **`--accent-text` is a twelfth base token** (with `--accent`, `--accent-ink`): the accent as text or a thin line, nudged for contrast on the surface. `tests/theme.test.ts` checks it in every theme and mode.
+7. **Icons are stroke icons** (`currentColor`, 1.75 stroke on a 24 grid), not filled glyphs.
+8. **`ConfirmDialog`** (`renderer/shell/useConfirm.tsx`, reached as `useShell().confirm`) is the one confirmation dialog; apps never build their own.
+9. **`ListRow`** takes an optional `secondary` line and `wrap`. Without `onSelect` the title is plain text, not a button (Tasks: the checkbox is the control).
+10. **`TextField` and `TextArea`** take a `ref` to the inner element (React 19 ref-as-prop) and `invalid` (error border and `aria-invalid`); `TextField` also takes `type="date"`; `TextArea` takes `fill`.
+11. **`Toolbar`** takes `end`, content pinned to the right edge. `Dropdown` takes `disabled` and handles an empty option list (it is disabled). `Button` and `IconButton` style `aria-pressed="true"` as the toggled state.
+12. **`useCollection`** returns `reload()`, which reads a collection again after a failed load; Notes, Tasks and Clipboard offer it as "Try again".
+13. **Theme scoping:** each theme block's selector is `:root[data-theme=…][data-mode=…], [data-theme=…][data-mode=…]`, and the derived colour tokens in `tokens.css` re-derive on any element with both attributes. The Settings swatches set the two attributes and nothing else; `?raw` parsing of theme CSS (`themeTokens.parseThemeTokens`, `themeSamples.ts`) was removed.
+14. **New tokens:** `--fs-display` (the Timer clock) and `--media-bg` / `--media-ink`, a surface that is dark in every theme (the Player's picture area).
+15. **Validators:** `v.object({ … })` checks a plain object field by field (`timer:start`, `news:list`).
+16. **Layering:** main imports nothing from `renderer/`. The Player's file-type helpers (extension list, MIME map, unsupported message) live in `shared/mediaTypes.ts`, imported by both sides.
+17. **Display paths:** `displayFolder` shows the home folder as `~` and elides the middle of a path longer than 40 characters (`~/…/redesign/notes`). The renderer never receives a longer absolute path than that.
+18. **`devCapture.ts`** ends with `app.exit(0)` (it skips quit guards, so an unsaved Editor cannot hang a capture) and presses `APP_CAPTURE_KEYS` 400 ms apart, waiting for the last key before the screenshot.
+19. **`useShortcuts`** exports `ignoresKey` (pure, tested): Space and Enter are left to a focused button, link or role control, and every key to text fields and modifier chords.
+20. **Config:** `package.json` is at `0.1.0`. The `vite` and `vitest` scripts pass `--configLoader runner`, and `vite.config.ts` uses `import.meta.dirname`; this removes the Vite `configLoader: 'native'` warning without making the package `"type": "module"`.
