@@ -38,7 +38,7 @@ const backgroundFor = (s: Settings): string => WINDOW_BG[s.theme][resolvedMode()
 /** APP_WINDOW_BOUNDS=1280x800 or x,y,w,h: dev aid that overrides saved bounds (ignored when packaged). */
 function boundsOverride(): WindowState["bounds"] | undefined {
   const raw = process.env[`${brand.envPrefix}_WINDOW_BOUNDS`];
-  if (!raw) return undefined;
+  if (!raw || app.isPackaged) return undefined;
   const n = raw.split(/[x,]/).map(Number);
   if (n.some((x) => !Number.isFinite(x))) return undefined;
   if (n.length === 2) return { x: Number.NaN, y: Number.NaN, width: n[0], height: n[1] };

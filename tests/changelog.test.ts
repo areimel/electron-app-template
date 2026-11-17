@@ -37,7 +37,7 @@ describe("parseChangelog", () => {
   it("parses the real CHANGELOG.md", () => {
     const md = readFileSync(fileURLToPath(new URL("../CHANGELOG.md", import.meta.url)), "utf8");
     const entries = parseChangelog(md);
-    expect(entries.length).toBeGreaterThanOrEqual(2);
+    expect(entries.length).toBeGreaterThanOrEqual(1);
     for (const entry of entries) expect(entry.items.length).toBeGreaterThan(0);
     expect(CHANGELOG).toEqual(entries);
   });

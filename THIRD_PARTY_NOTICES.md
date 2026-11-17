@@ -1,42 +1,33 @@
 # Third-party notices
 
-## FFmpeg
-
-Shader Video Player does not bundle FFmpeg. At runtime it runs the system `ffmpeg` and `ffprobe` programs
-(https://ffmpeg.org) found on `PATH` (the `.deb` declares `ffmpeg` as a dependency), or the paths given in
-the `SVP_FFMPEG_PATH` and `SVP_FFPROBE_PATH` environment variables. They run as separate processes and are
-covered by their own licenses (LGPL/GPL depending on your distribution's build). FFmpeg is a trademark of
-Fabrice Bellard.
+What ships inside the app, with the licence names and copyright lines taken from each package's own files. The full licence texts ship with the packages (`node_modules/<package>/LICENSE`) and, for Electron and Chromium, in the app bundle (`LICENSE`, `LICENSES.chromium.html`).
 
 ## babu-video-player
 
-This project is based on babu-video-player, MIT licensed, Copyright Babu Studios.
+This project began as a copy of babu-video-player, MIT licensed, Copyright Babu Studios. The copyright line is kept in `LICENSE`.
 
-## Hash without Sine
+## Barlow and Barlow Condensed
 
-`renderer/shader/glsl/common/noise.glsl` contains the `hash12` and `hash32` functions from "Hash without Sine"
-by Dave Hoskins, MIT licensed.
+The interface typefaces are Barlow (text) and Barlow Condensed (headings), distributed through `@fontsource/barlow` and `@fontsource/barlow-condensed` and bundled with the app.
 
-## Archivo
+> Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
 
-The interface typeface is Archivo, distributed through `@fontsource-variable/archivo` and bundled with the app.
+Licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). The full licence text ships with the packages as `node_modules/@fontsource/barlow/LICENSE` and `node_modules/@fontsource/barlow-condensed/LICENSE`.
 
-> Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+## Electron and Chromium
 
-Licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). The full licence text ships
-with the package as `node_modules/@fontsource-variable/archivo/LICENSE`.
+Electron is MIT licensed, Copyright (c) Electron contributors and Copyright (c) 2013-2020 GitHub Inc. Chromium and the other components Electron includes are distributed under their own licences, listed in `LICENSES.chromium.html` in the app bundle.
 
-## Press Start 2P
+## React
 
-The home screen's pixel typeface is Press Start 2P by CodeMan38, distributed through `@fontsource/press-start-2p` and
-bundled with the app.
+`react` and `react-dom` are MIT licensed, Copyright (c) Meta Platforms, Inc. and affiliates.
 
-> Copyright 2012 The Press Start 2P Project Authors (cody@zone38.net), with Reserved Font Name "Press Start 2P".
+## markdown-it
 
-Licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). The full licence text ships
-with the package as `node_modules/@fontsource/press-start-2p/LICENSE`.
+The Editor's Markdown preview uses `markdown-it`, MIT licensed, Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin. Its browser build imports these packages, which are part of the renderer bundle:
 
-## Electron, Chromium, React
-
-Electron and Chromium are distributed under the MIT and BSD-style licenses; their notices ship in the app
-bundle (`LICENSE`, `LICENSES.chromium.html`). React is MIT licensed.
+- `mdurl`, MIT, Copyright (c) 2015 Vitaly Puzrin, Alex Kocharin
+- `linkify-it`, MIT, Copyright (c) 2015 Vitaly Puzrin
+- `uc.micro`, MIT, Copyright Mathias Bynens
+- `punycode.js`, MIT, Copyright Mathias Bynens
+- `entities`, BSD-2-Clause, Copyright (c) Felix Böhm
