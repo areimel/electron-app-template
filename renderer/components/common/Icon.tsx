@@ -1,68 +1,63 @@
-// Placeholder square for icons builder C has not drawn yet.
-const PLACEHOLDER = "M5 5h14v14H5z";
-
+/**
+ * The icon set: one line weight, square caps, 24x24 grid with a 3 px margin, one `d` string each.
+ * Drawn for this template, no icon library. A dot is a zero-length segment ("h.01").
+ */
 const PATHS = {
-  notes: PLACEHOLDER,
-  tasks: PLACEHOLDER,
-  editor: PLACEHOLDER,
-  clipboard: PLACEHOLDER,
-  timer: PLACEHOLDER,
-  system: PLACEHOLDER,
-  news: PLACEHOLDER,
-  player: PLACEHOLDER,
-  home: PLACEHOLDER,
-  settings: PLACEHOLDER,
-  search: PLACEHOLDER,
-  palette: PLACEHOLDER,
-  sun: PLACEHOLDER,
-  moon: PLACEHOLDER,
-  monitor: PLACEHOLDER,
-  plus: PLACEHOLDER,
-  trash: PLACEHOLDER,
-  pin: PLACEHOLDER,
-  check: PLACEHOLDER,
-  copy: PLACEHOLDER,
-  save: PLACEHOLDER,
-  refresh: PLACEHOLDER,
-  external: PLACEHOLDER,
-  undo: PLACEHOLDER,
-  chevronUp: PLACEHOLDER,
-  chevronDown: PLACEHOLDER,
-  warning: PLACEHOLDER,
+  // Apps
+  notes: "M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h7",
+  tasks: "M3.5 6l1.7 1.7L8 4.5 M11 6h10 M3.5 12l1.7 1.7L8 10.5 M11 12h10 M4 16.5h3.5V20H4z M11 18h10",
+  editor: "M8 7l-5 5 5 5 M16 7l5 5-5 5 M13.5 5l-3 14",
+  clipboard: "M8 5H5v16h14V5h-3 M8 3h8v4H8z M9 12h6 M9 16h4",
+  timer: "M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M10 2h4 M12 2v3 M12 9v4.5l2.5 2",
+  system: "M7 7h10v10H7z M10 10h4v4h-4z M9 3v4 M15 3v4 M9 17v4 M15 17v4 M3 9h4 M3 15h4 M17 9h4 M17 15h4",
+  news: "M4 4h13v16H6a2 2 0 0 1-2-2z M17 8h3v10a2 2 0 0 1-2 2 M7 8h7 M7 12h7 M7 16h4",
+  player: "M3 5h18v14H3z M10 9v6l5-3z",
 
-  play: "M8 5v14l11-7z",
-  pause: "M6 5h4v14H6zM14 5h4v14h-4z",
-  back10: "M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z",
-  fwd10: "M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z",
-  volume: "M3 9v6h4l5 5V4L7 9zM16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z",
-  mute: "M3 9v6h4l5 5V4L7 9zM16 9l5 6m0-6l-5 6",
-  fullscreen: "M5 5h5V3H3v7h2zM14 3v2h5v5h2V3zM5 14H3v7h7v-2H5zM19 19h-5v2h7v-7h-2z",
-  exitFullscreen: "M8 3H6v3H3v2h5zM16 3h-2v5h5V6h-3zM3 16h3v3h2v-5H3zM14 14v5h2v-3h3v-2z",
-  pip: "M19 7H5v10h14zM3 5h18v14H3zM11 11h7v5h-7z",
-  info: "M11 7h2v2h-2zM11 11h2v6h-2zM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z",
-  audio: "M12 3v10.5a4 4 0 1 0 2 3.5V7h4V3z",
-  subtitles: "M4 5h16v14H4zM7 10h4v2H7zM13 10h4v2h-4zM7 14h6v2H7z",
-  folder: "M3 5h7l2 2h9v12H3z",
-  effects: "M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4zM19 15l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z",
-  speed: "M12 4a9 9 0 0 0-9 9h2a7 7 0 0 1 14 0h2a9 9 0 0 0-9-9zM12 12l4-4",
-  skipNext: "M6 18l8.5-6L6 6zM16 6h2v12h-2z",
-  skipPrev: "M6 6h2v12H6zM9.5 12l8.5 6V6z",
-  queue: "M3 6h13v2H3zM3 11h13v2H3zM3 16h7v2H3zM14 15v6l5-3z",
-  back: "M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z",
-  loop: "M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2z",
-  loopOne: "M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2zM11 9.5v1h1.2V15H13.6V9z",
-  replay: "M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z",
-  camera: "M9 2 7.2 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.2L15 2zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-  keyboard: "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM5 8h2v2H5zM9 8h2v2H9zM13 8h2v2h-2zM17 8h2v2h-2zM5 12h2v2H5zM9 12h2v2H9zM13 12h2v2h-2zM17 12h2v2h-2zM8 15h8v2H8z",
-  close: "M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4z",
+  // Shell
+  home: "M3 11l9-8 9 8 M5 9.5V21h5v-6h4v6h5V9.5",
+  settings: "M4 6h9 M17 6h3 M13 4h4v4h-4z M4 12h3 M11 12h9 M7 10h4v4H7z M4 18h11 M19 18h1 M15 16h4v4h-4z",
+  search: "M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15z M16 16l5 5",
+  palette: "M3 5h18v14H3z M7.5 9.5l3 2.5-3 2.5 M12.5 15h4",
+  keyboard: "M3 6h18v12H3z M6.5 10h.01 M10 10h.01 M14 10h.01 M17.5 10h.01 M7 14.5h10",
+  sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2.5v3 M12 18.5v3 M2.5 12h3 M18.5 12h3 M5.3 5.3l2.1 2.1 M16.6 16.6l2.1 2.1 M5.3 18.7l2.1-2.1 M16.6 7.4l2.1-2.1",
+  moon: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z",
+  monitor: "M3 4h18v12H3z M8 20h8 M12 16v4",
+  back: "M20 12H5 M11 6l-6 6 6 6",
+  close: "M5 5l14 14 M19 5L5 19",
+
+  // Actions
+  plus: "M12 4v16 M4 12h16",
+  trash: "M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13 M10 11v6 M14 11v6",
+  pin: "M8 3h8 M9 3v6l-3 4h12l-3-4V3 M12 13v8",
+  check: "M4 12.5l5 5L20 6.5",
+  copy: "M8 8h12v13H8z M16 8V3H4v13h4",
+  save: "M4 4h13l3 3v13H4z M8 4v5h8V4 M8 20v-6h8v6",
+  folder: "M3 6h7l2 2h9v12H3z",
+  refresh: "M3 4v6h6 M21 20v-6h-6 M20.5 9A8.5 8.5 0 0 0 5.6 5.6L3 10 M3.5 15a8.5 8.5 0 0 0 14.9 3.4L21 14",
+  external: "M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6",
+  undo: "M4 9h11a5 5 0 0 1 0 10H9 M8 5L4 9l4 4",
+  chevronUp: "M5 15l7-7 7 7",
+  chevronDown: "M5 9l7 7 7-7",
+  warning: "M12 3L2.5 20h19z M12 10v5 M12 17.5h.01",
+  info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 11v6 M12 7.5h.01",
+
+  // Player
+  play: "M7 4.5v15l12-7.5z",
+  pause: "M6 5h4v14H6z M14 5h4v14h-4z",
+  fullscreen: "M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5",
+  exitFullscreen: "M9 4v5H4 M20 9h-5V4 M15 20v-5h5 M4 15h5v5",
+  volume: "M4 9.5h4l5-4.5v14l-5-4.5H4z M16.5 9a4 4 0 0 1 0 6 M19 6.5a8 8 0 0 1 0 11",
+  mute: "M4 9.5h4l5-4.5v14l-5-4.5H4z M17 9.5l4 5 M21 9.5l-4 5",
 } as const;
 
 export type IconName = keyof typeof PATHS;
+export const ICON_NAMES = Object.keys(PATHS) as IconName[];
 
-export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
+export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d={PATHS[name]} fillRule="evenodd" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}
+      strokeLinecap="square" strokeLinejoin="miter" aria-hidden="true">
+      <path d={PATHS[name]} />
     </svg>
   );
 }
