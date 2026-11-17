@@ -1,7 +1,17 @@
-import type { CollectionName } from "../../shared/collections";
+import { COLLECTIONS, type CollectionName } from "../../shared/collections";
+import { isRecordId } from "../../shared/collections/base";
 import type { Check } from "./handle";
 
-const todo = (): never => { throw new Error("todo"); };
+/** Thrown by every check. `handle` passes the message on to the renderer as plain text. */
+export class IpcArgError extends Error {
+  constructor(at: string, expected: string) {
+    super(`Invalid argument ${at}: expected ${expected}`);
+    this.name = "IpcArgError";
+  }
+}
+
+const bad = (at: string, expected: string): never => { throw new IpcArgError(at, expected); };
+
 export const v: {
   none: (a: unknown[]) => [];
   args<T extends unknown[]>(...checks: { [K in keyof T]: Check<T[K]> }): (a: unknown[]) => T;
@@ -13,4 +23,33 @@ export const v: {
   recordId: Check<string>;            // isRecordId
   collection: Check<CollectionName>;  // key of COLLECTIONS
   raw: Check<unknown>;                // only for payloads that go straight into a heal()
-} = { none: todo, args: todo, string: todo, int: todo, bool: todo, oneOf: todo, nullable: todo, recordId: todo, collection: todo, raw: todo };
+} = {
+  none: (a) => {
+    if (a.length !== 0) bad("list", "no arguments");
+    return [];
+  },
+  args: <T extends unknown[]>(...checks: { [K in keyof T]: Check<T[K]> }) => (a: unknown[]): T => {
+    const list = checks as unknown as Check<unknown>[];
+    if (!Array.isArray(a) || a.length > list.length) bad("list", `at most ${list.length} arguments`);
+    return list.map((check, i) => check(a[i], `#${i + 1}`)) as T;
+  },
+  string: (o = {}) => (x, at) => {
+    const { min = 0, max = 10_000, pattern } = o;
+    if (typeof x !== "string") return bad(at, "a string");
+    if (x.length < min || x.length > max) return bad(at, `a string of ${min} to ${max} characters`);
+    if (pattern && !pattern.test(x)) return bad(at, "a string in the expected format");
+    return x;
+  },
+  int: (min, max) => (x, at) => {
+    if (typeof x !== "number" || !Number.isInteger(x) || x < min || x > max) return bad(at, `an integer from ${min} to ${max}`);
+    return x;
+  },
+  bool: (x, at) => (typeof x === "boolean" ? x : bad(at, "a boolean")),
+  oneOf: <T extends string>(values: readonly T[]): Check<T> => (x, at) =>
+    typeof x === "string" && (values as readonly string[]).includes(x) ? (x as T) : bad(at, `one of ${values.join(", ")}`),
+  nullable: (c) => (x, at) => (x === null ? null : c(x, at)),
+  recordId: (x, at) => (isRecordId(x) ? x : bad(at, "a record id")),
+  collection: (x, at) =>
+    typeof x === "string" && Object.hasOwn(COLLECTIONS, x) ? (x as CollectionName) : bad(at, "a collection name"),
+  raw: (x) => x,
+};
