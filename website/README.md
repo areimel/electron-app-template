@@ -1,6 +1,26 @@
-# CRT-TV website
+# Website
 
-Static Astro product site for CRT-TV. Started with `npm create astro@latest -- --template blog`; sample blog content was replaced with Home, Download, Docs, and Contact. Website branding does not change the desktop app.
+A static Astro site that describes the desktop app in this repository. It is a template: rebrand it by editing the files in `src/config/`, not the pages.
+
+## Rebrand
+
+Every product fact, deploy setting and piece of copy lives in `src/config/`. Pages and components read from there, so most rebrands touch only these files.
+
+| File | Holds |
+| --- | --- |
+| `src/config/deploy.ts` | Default origin (`siteUrl`) and base path (`siteBase`). `SITE_URL` and `SITE_BASE` override them. |
+| `src/config/product.ts` | Name, short description, description, package name, repository and release URLs, licence, operating system, author. Start here. |
+| `src/config/site.ts` | URL helpers (`url()`, `absoluteUrl()`), the install command, main navigation, and the theme storage key. Re-exports `product`. |
+| `src/config/content.ts` | Demo list and sheet numbers, shared feature cards, screenshot slots (`src` and `alt`), footer text, page meta defaults. |
+| `src/config/forms.ts` | Form endpoint, timeout, email subjects, consent field name, and all signup and contact labels and messages. |
+| `src/config/pages/*.ts` | Page copy for home, download, docs, contact and the 404 page. One file per page. |
+
+Other assets to replace:
+
+- `public/favicon.svg`: the browser tab icon.
+- `public/social.svg` and `public/social.png`: the link preview image. Edit the SVG, then render the PNG with the command in `public/images/README.md`.
+- Screenshots: `public/images/`. Each slot in `src/config/content.ts` points at `images/placeholder.svg` until a real capture is added. `public/images/README.md` explains how to capture and convert them.
+- `public/install.sh` is not hand-edited. It is generated from `installCommand` in `src/config/site.ts` by `src/pages/install.sh.ts`, using `src/lib/installScript.ts`. Change the release file name or repository in `src/config/product.ts`, and the script follows.
 
 ## Local development
 
@@ -12,7 +32,11 @@ cp website/.env.example website/.env
 pnpm --dir website dev --background
 ```
 
-Open **http://localhost:4321/shader-video-player/**. Manage the server with `pnpm --dir website dev status`, `dev logs`, or `dev stop`. Restart after changing environment variables. This folder has its own pnpm workspace and lockfile; desktop dependencies are separate.
+Open **http://localhost:4321/electron-app-template/**. The path is `<SITE_BASE>/` and comes from `src/config/deploy.ts` unless you override it. Manage the background server with `pnpm --dir website dev status`, `dev logs` or `dev stop`. Restart it after changing `website/.env`.
+
+This folder has its own pnpm workspace and lockfile. Desktop dependencies are separate, so install and run website commands with `pnpm --dir website`.
+
+Check, build and preview:
 
 ```sh
 pnpm --dir website check
@@ -22,41 +46,50 @@ pnpm --dir website preview
 
 The static output is `website/dist`. No application server is required.
 
+## Theme
+
+The colours come from the Blueprint tokens in `src/styles/global.css`. Light and dark variants follow the system preference by default. The header toggle overrides that choice and stores it in `localStorage` under the key in `themeStorageKey` (`src/config/site.ts`). Nothing else is stored in the browser.
+
 ## Web3Forms setup
 
-Create an access key at [Web3Forms](https://web3forms.com/) for the inbox that should receive submissions. Set `PUBLIC_WEB3FORMS_ACCESS_KEY` in `website/.env` for local work, or in the build environment. Rebuild after changing it.
+The signup and contact forms submit through [Web3Forms](https://web3forms.com/). Create an access key for the inbox that should receive submissions. Set it as `PUBLIC_WEB3FORMS_ACCESS_KEY` in `website/.env` for local work, or in the build environment. Rebuild after changing it.
 
-This key is deliberately public and is embedded in HTML. Never use a private API secret. Empty configuration disables forms with a visible explanation. No key is checked into this repository.
+- The key is public by design. It is embedded in the built HTML. Never use a private API secret.
+- No key is committed to this repository, and `website/.env` is gitignored.
+- With no key, both forms are disabled and show a visible message. This path is tested.
+- Signup requires explicit consent to release updates. A contact inquiry never subscribes the sender.
+- Both kinds of submission go to the configured inbox under different subjects (`src/config/forms.ts`). Signup is email capture, not a mailing-list integration, so handle launch messages and removal requests yourself.
+- Restrict allowed domains in Web3Forms if your account supports it.
 
-Signup requires explicit launch-update consent. Inquiries do not subscribe the sender. Both are sent to the configured inbox under distinct subjects. This is email capture, not an automatic mailing-list integration; manage launch messages and removal requests separately. A real delivery check still requires your key and inbox. Restrict allowed domains in Web3Forms if supported by your account.
+Real delivery needs your key and inbox to check. Tests mock every submission.
 
 ## GitHub Pages
 
-The workflow `.github/workflows/website-pages.yml` only runs when manually dispatched. Nothing is deployed by local development or pushes alone.
+The workflow `.github/workflows/website-pages.yml`, named **Deploy website**, runs only when dispatched manually. Local development and pushes do not deploy anything.
 
-1. In repository Settings → Pages, choose **GitHub Actions** as the source.
-2. Add the Actions secret `PUBLIC_WEB3FORMS_ACCESS_KEY` for the receiving inbox.
-3. Defaults are `SITE_URL=https://areimel.github.io` and `SITE_BASE=/shader-video-player`. Override them with repository Actions variables if the destination changes. For a custom domain, use its HTTPS origin and `SITE_BASE=/`, and configure the domain in Pages settings.
-4. Run **Deploy CRT-TV website** in Actions when ready to publish.
+1. In repository Settings, Pages, choose **GitHub Actions** as the source.
+2. Add the Actions secret `PUBLIC_WEB3FORMS_ACCESS_KEY`. It is the public key for the inbox.
+3. Optionally set the Actions variables `SITE_URL` and `SITE_BASE`. When they are empty, the workflow builds with the defaults in `src/config/deploy.ts`. Set them only when the destination differs from those defaults.
+4. Run **Deploy website** from the Actions tab.
 
-The workflow installs only website dependencies, checks Astro types, builds, and deploys `website/dist`. Navigation, screenshots, scripts, fonts, canonical URLs, and social images all respect the configured base. `SITE_URL` is the origin; keep the project path in `SITE_BASE`.
+For a custom domain, set `SITE_URL` to its HTTPS origin and `SITE_BASE` to `/`, then configure the domain in Pages settings. `SITE_URL` is the origin only. Keep any project path in `SITE_BASE`.
 
-For local origin/base changes, edit `website/.env`. Shell environment values take precedence. Node loads this local file for Astro config; Astro exposes only `PUBLIC_` variables to browser code.
-
-## Editing
-
-- Shared layout and components: `src/layouts/` and `src/components/`.
-- Colors, typography and spacing: `src/styles/global.css`.
-- Shared site settings, navigation and features: `src/lib/`.
-- Starter manual: `src/content/guide.md`.
-- Screenshot provenance: `public/images/README.md`.
-
-Keep repeated UI in shared components and files under roughly 300 lines. App screenshots use generated test footage, and still show the existing desktop branding. The Download command installs from `public/install.sh` (served at `<base>/install.sh`), which fetches the newest `.deb` and its `SHA256SUMS` from GitHub Releases.
+The workflow installs with the lockfile, runs `astro check`, builds, and deploys `website/dist`. Links, assets, canonical URLs, the install script and the social image all respect the configured base.
 
 ## Browser verification
 
-`pnpm --dir website test:browser` builds and tests two production variants: a dummy Web3Forms key with mocked responses, then no key. It starts and stops its own preview server on port 4321; stop any existing website server first. It leaves the output without the dummy key. No test submissions reach Web3Forms.
+```sh
+pnpm --dir website test:browser
+```
 
-The suite uses local `/usr/bin/google-chrome` when present. Otherwise run `pnpm --dir website exec playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to a Chrome/Chromium executable. Tests cover desktop/mobile layouts, links, command copying, consent, submission states and unavailable forms.
+This builds and tests two production variants with Playwright: one with a dummy Web3Forms key and mocked responses, then one without a key. It starts and stops its own preview server on port 4321, so stop any running website dev server first, or pick another port with `PREVIEW_PORT=4410 pnpm --dir website test:browser`. The final build is left without the dummy key. No test submission reaches Web3Forms.
 
-Repository policy also requires `pnpm typecheck`, `pnpm test`, and `pnpm check:shaders` before each commit. Astro type checks and builds are separate from those desktop checks.
+The suite uses `/usr/bin/google-chrome` when it exists. Otherwise run `pnpm --dir website exec playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to a Chrome or Chromium binary. The tests cover desktop and mobile layouts, links, the command copy button, consent, submission states and the unavailable-forms path.
+
+## Editing
+
+- Shared components live in `src/components/` and the layout in `src/layouts/`. Reuse them rather than repeating their markup.
+- Colours, type and spacing come from the tokens in `src/styles/global.css`. Do not add raw colour values to pages or components.
+- Copy and product facts go in `src/config/`, not in page files.
+- Keep files under roughly 300 lines. Split by responsibility when they grow.
+- The site's starter manual is `src/content/guide.md`.

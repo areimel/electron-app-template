@@ -1,4 +1,4 @@
-name: Deploy CRT-TV website
+name: Deploy website
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: crt-tv-pages
+  group: website-pages
   cancel-in-progress: true
 
 jobs:
@@ -28,8 +28,8 @@ jobs:
       - run: pnpm --dir website build
         env:
           PUBLIC_WEB3FORMS_ACCESS_KEY: ${{ secrets.PUBLIC_WEB3FORMS_ACCESS_KEY }}
-          SITE_URL: ${{ vars.SITE_URL || 'https://areimel.github.io' }}
-          SITE_BASE: ${{ vars.SITE_BASE || '/shader-video-player' }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_BASE: ${{ vars.SITE_BASE }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website/dist
