@@ -6,6 +6,7 @@ import { List, ListRow } from "../../components/common/List";
 import { TextField } from "../../components/common/TextField";
 import { useCollection } from "../../hooks/useCollection";
 import { useCommandHandlers, useShell, useTitleInfo } from "../../shell/ShellContext";
+import { errorMessage } from "../../utils/errorMessage";
 import { MAX_CLIPBOARD_READ } from "../../../shared/ipc/clipboard";
 import type { Snippet } from "../../../shared/collections/snippets";
 import { SnippetDialog } from "./SnippetDialog";
@@ -14,7 +15,6 @@ import "./clipboard.css";
 
 type Editing = { id: string | null; label: string; text: string };   // id null: a new snippet
 
-const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function ClipboardApp() {
   const { toast } = useShell();
@@ -30,7 +30,7 @@ export default function ClipboardApp() {
     try {
       setClip((await window.app.invoke("clipboard:read")).text);
     } catch (e) {
-      toast("error", `Could not read the clipboard: ${reason(e)}. Try again.`);
+      toast("error", `Could not read the clipboard: ${errorMessage(e)}. Try again.`);
     }
   };
   const copy = async (text: string) => {
@@ -38,7 +38,7 @@ export default function ClipboardApp() {
       await window.app.invoke("clipboard:write", text);
       toast("success", "Copied to clipboard");
     } catch (e) {
-      toast("error", `Could not copy: ${reason(e)}. Try again.`);
+      toast("error", `Could not copy: ${errorMessage(e)}. Try again.`);
     }
   };
   const save = async (label: string, text: string, id: string | null = null) => {
@@ -51,7 +51,7 @@ export default function ClipboardApp() {
       setEditing(null);
       toast("success", id ? "Snippet updated" : "Snippet saved");
     } catch (e) {
-      toast("error", `Could not save the snippet: ${reason(e)}. Try again.`);
+      toast("error", `Could not save the snippet: ${errorMessage(e)}. Try again.`);
     }
   };
   const remove = async (s: Snippet) => {
@@ -59,7 +59,7 @@ export default function ClipboardApp() {
       const removed = await store.remove(s.id);
       toast("info", "Snippet deleted", { label: "Undo", run: () => { void store.restore(removed); } });
     } catch (e) {
-      toast("error", `Could not delete the snippet: ${reason(e)}. Try again.`);
+      toast("error", `Could not delete the snippet: ${errorMessage(e)}. Try again.`);
     }
   };
   const newSnippet = () => setEditing({ id: null, label: "", text: "" });

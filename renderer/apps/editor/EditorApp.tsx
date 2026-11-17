@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState, type DragEvent, type MouseEvent } from "react";
+import { useDeferredValue, useMemo, useState, type DragEvent } from "react";
 import { Button } from "../../components/common/Button";
 import { EmptyState } from "../../components/common/EmptyState";
 import { SplitPane } from "../../components/common/SplitPane";
@@ -11,9 +11,6 @@ import { useEditor } from "./useEditor";
 import "./editor.css";
 
 const hasFiles = (e: DragEvent): boolean => e.dataTransfer.types.includes("Files");
-
-/** The preview shows links but never follows them: a click or middle-click does nothing. */
-const keepInPlace = (e: MouseEvent) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); };
 
 export default function EditorApp() {
   const editor = useEditor();
@@ -61,7 +58,7 @@ export default function EditorApp() {
           preview ? <SplitPane label="Editor and preview" startWidth="1fr" start={text} end={
             // Safe to inject: markdown-it runs with html: false, so the document cannot add elements.
             <div className="editor-preview" role="region" aria-label="Preview" tabIndex={0}
-              onClick={keepInPlace} onAuxClick={keepInPlace} dangerouslySetInnerHTML={{ __html: html }} />
+              dangerouslySetInnerHTML={{ __html: html }} />
           } /> : text
         )}
       </div>

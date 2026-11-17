@@ -68,7 +68,7 @@ export function ConfirmDialog(p: {
         <Button variant="quiet" onClick={p.onCancel}>{p.cancelLabel ?? "Cancel"}</Button>
         <Button variant={p.danger ? "danger" : "primary"} onClick={p.onConfirm}>{p.confirmLabel}</Button>
       </>}>
-      {p.body && <p>{p.body}</p>}
+      {p.body && <p className="confirm-body">{p.body}</p>}
     </Dialog>
   );
 }

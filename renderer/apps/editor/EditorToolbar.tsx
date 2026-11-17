@@ -1,17 +1,12 @@
-import { hint } from "../../../shared/commands";
 import { Button } from "../../components/common/Button";
 import { Dropdown } from "../../components/common/Dropdown";
 import { Toolbar } from "../../components/common/Toolbar";
 import type { Editor } from "./useEditor";
-import { EDITOR_COMMANDS } from "./commands";
-
-const tip = (id: string): string => {
-  const c = EDITOR_COMMANDS.find((x) => x.id === id)!;
-  return hint(c, window.app.platform === "darwin");
-};
+import { useHint } from "../../shell/ShellContext";
 
 export function EditorToolbar(p: { editor: Editor; preview: boolean; onTogglePreview(): void }) {
   const { doc, recents } = p.editor;
+  const tip = useHint();
   return (
     <Toolbar label="File" end={<>
       <span className="editor-file" title={doc ? `${doc.name} in ${doc.folder}` : undefined}>

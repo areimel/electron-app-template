@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { MAX_LABEL, MAX_MINUTES, MIN_MINUTES, formatClock, remainingMs, type TimerState } from "../../../shared/ipc/timer";
-import { hint } from "../../../shared/commands";
 import { Button } from "../../components/common/Button";
 import { Segmented } from "../../components/common/Segmented";
 import { TextField } from "../../components/common/TextField";
 import { useAppEvent } from "../../hooks/useAppEvent";
-import { IS_MAC } from "../../utils/platform";
-import { useCommandHandlers, useShell } from "../../shell/ShellContext";
-import { timer } from "./index";
+import { useCommandHandlers, useHint, useShell } from "../../shell/ShellContext";
 import "./timer.css";
 
 const PRESETS = [25, 5, 15].map((m) => ({ value: m, label: `${m} min` }));
 const STATUS_TEXT = { idle: "Ready", running: "Running", paused: "Paused", done: "Time's up" } as const;
-const cmd = (id: string) => timer.commands!.find((c) => c.id === id)!;
 
 export default function TimerApp() {
   const { toast } = useShell();
+  const hint = useHint();
   // `timer` is main's truth. It is fetched on every mount: leaving the sheet unmounts this
   // component but not the timer, so coming back shows the right time.
   const [timerState, setTimerState] = useState<TimerState | null>(null);
@@ -83,8 +80,8 @@ export default function TimerApp() {
         </p>
 
         <div className="timer-actions">
-          <Button onClick={toggle} title={hint(cmd("timer.toggle"), IS_MAC)}>{mainLabel}</Button>
-          <Button variant="quiet" onClick={reset} disabled={idle} title={hint(cmd("timer.reset"), IS_MAC)}>Reset</Button>
+          <Button onClick={toggle} title={hint("timer.toggle")}>{mainLabel}</Button>
+          <Button variant="quiet" onClick={reset} disabled={idle} title={hint("timer.reset")}>Reset</Button>
         </div>
 
         {(idle || status === "done") && (

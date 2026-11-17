@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SystemInfo, SystemSample } from "../../../shared/ipc/system";
 import { useAppEvent } from "../../hooks/useAppEvent";
+import { errorMessage } from "../../utils/errorMessage";
 
 export interface SystemState { info: SystemInfo | null; sample: SystemSample | null; error: string | null; retry(): void }
 
@@ -21,7 +22,7 @@ export function useSystem(): SystemState {
     setError(null);
     Promise.all([window.app.invoke("system:info"), window.app.invoke("system:subscribe")])
       .then(([i, first]) => { if (current) { setInfo(i); setSample((s) => s ?? first); } })
-      .catch((e: unknown) => { if (current) setError(e instanceof Error ? e.message : String(e)); });
+      .catch((e: unknown) => { if (current) setError(errorMessage(e)); });
     return () => {
       current = false;
       void window.app.invoke("system:unsubscribe").catch(() => undefined);

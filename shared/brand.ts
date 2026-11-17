@@ -5,7 +5,6 @@ export const brand = {
   appId: "com.example.apptemplate",     // electron-builder appId, Windows AppUserModelId
   scheme: "app-template",               // deep links: app-template://open/notes
   mediaScheme: "app-template-media",    // Player's file protocol (privileged scheme)
-  storagePrefix: "app-template",        // localStorage keys: `${storagePrefix}.${key}`
   envPrefix: "APP",                     // APP_CAPTURE, APP_LOG_LEVEL, APP_WINDOW_BOUNDS
   author: "Alec Reimel",
   copyright: "Copyright © Alec Reimel. MIT licence.",
@@ -19,4 +18,3 @@ export const brand = {
 } as const;
 
 export type LinkKey = keyof typeof brand.links;
-export const storageKey = (key: string): string => `${brand.storagePrefix}.${key}`;

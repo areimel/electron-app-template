@@ -20,6 +20,12 @@ export function hintFor(commands: readonly CommandSpec[], id: string, mac: boole
   return c ? hint(c, mac) : id;
 }
 
+/** The first key or accelerator of a command id, as the table spells it ("CmdOrCtrl+K"), or undefined. */
+export function keyFor(commands: readonly CommandSpec[], id: string): string | undefined {
+  const c = commands.find((x) => x.id === id);
+  return c ? keysOf(c)[0] : undefined;
+}
+
 export interface HelpGroup { name: string; rows: { id: string; label: string; keys: string[] }[] }
 
 /** Commands that have a key or accelerator, grouped for the help overlay: shell groups first, then app groups. */

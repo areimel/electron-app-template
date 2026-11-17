@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button } from "../components/common/Button";
-import { Dialog } from "../components/common/Dialog";
+import { ConfirmDialog } from "../components/common/Dialog";
 import type { ConfirmOptions } from "./ShellContext";
 
 interface Pending { options: ConfirmOptions; resolve(ok: boolean): void }
@@ -26,19 +25,8 @@ export function useConfirm(): { confirm(o: ConfirmOptions): Promise<boolean>; op
 
   useEffect(() => () => current.current?.resolve(false), []);
 
-  const o = pending?.options;
-  const node = o && (
-    <Dialog
-      title={o.title} size="sm" onClose={() => settle(false)}
-      footer={(
-        <>
-          <Button variant="quiet" onClick={() => settle(false)}>{o.cancelLabel ?? "Cancel"}</Button>
-          <Button variant={o.danger ? "danger" : "primary"} onClick={() => settle(true)}>{o.confirmLabel}</Button>
-        </>
-      )}
-    >
-      {o.body && <p className="confirm-body">{o.body}</p>}
-    </Dialog>
+  const node = pending && (
+    <ConfirmDialog {...pending.options} onConfirm={() => settle(true)} onCancel={() => settle(false)} />
   );
   return { confirm, open: !!pending, node };
 }

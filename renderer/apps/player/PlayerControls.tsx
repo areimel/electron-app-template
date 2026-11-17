@@ -1,10 +1,9 @@
-import { hint } from "../../../shared/commands";
 import { IconButton } from "../../components/common/IconButton";
 import { Slider } from "../../components/common/Slider";
-import { IS_MAC } from "../../utils/platform";
+import { useHint } from "../../shell/ShellContext";
 import { formatTime } from "../../utils/format";
 import type { Playback } from "./usePlayback";
-import { command, SEEK_STEP_SEC } from "./playerModel";
+import { SEEK_STEP_SEC } from "./playerModel";
 
 interface Props {
   p: Playback;
@@ -14,7 +13,7 @@ interface Props {
 
 /** The slim bar under the picture: play, seek, time, volume, fullscreen, open. */
 export function PlayerControls({ p, fullscreen, onFullscreen }: Props) {
-  const tip = (id: string) => hint(command(id), IS_MAC);
+  const tip = useHint();
   return (
     <div className="player-controls">
       <IconButton icon={p.paused ? "play" : "pause"} label={tip("player.togglePlay")} onClick={p.toggle} />

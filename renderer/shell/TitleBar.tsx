@@ -10,13 +10,15 @@ interface Props {
   mode: ModeSetting;
   /** Tooltip text per command id, from the command table. */
   hintOf(id: string): string;
+  /** The palette command's key, from the command table. */
+  paletteKey?: string;
   onPalette(): void;
   onCycleMode(): void;
   onSettings(): void;
 }
 
 /** In-page header under the native window frame: where you are, the command palette, mode and settings. */
-export function TitleBar({ name, mode, hintOf, onPalette, onCycleMode, onSettings }: Props) {
+export function TitleBar({ name, mode, hintOf, paletteKey, onPalette, onCycleMode, onSettings }: Props) {
   return (
     <header className="titlebar">
       <span className="titlebar-name">{name}</span>
@@ -24,7 +26,7 @@ export function TitleBar({ name, mode, hintOf, onPalette, onCycleMode, onSetting
         <button type="button" className="titlebar-palette" onClick={onPalette} title={hintOf("shell.palette")}>
           <Icon name="search" size={18} />
           <span>Search commands</span>
-          <Kbd k="CmdOrCtrl+K" />
+          {paletteKey && <Kbd k={paletteKey} />}
         </button>
         <IconButton icon={MODE_ICON[mode]} label={hintOf("shell.cycleMode")} onClick={onCycleMode} />
         <IconButton icon="settings" label={hintOf("shell.settings")} onClick={onSettings} />

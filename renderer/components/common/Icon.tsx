@@ -17,12 +17,9 @@ const PATHS = {
   home: "M3 11l9-8 9 8 M5 9.5V21h5v-6h4v6h5V9.5",
   settings: "M4 6h9 M17 6h3 M13 4h4v4h-4z M4 12h3 M11 12h9 M7 10h4v4H7z M4 18h11 M19 18h1 M15 16h4v4h-4z",
   search: "M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15z M16 16l5 5",
-  palette: "M3 5h18v14H3z M7.5 9.5l3 2.5-3 2.5 M12.5 15h4",
-  keyboard: "M3 6h18v12H3z M6.5 10h.01 M10 10h.01 M14 10h.01 M17.5 10h.01 M7 14.5h10",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2.5v3 M12 18.5v3 M2.5 12h3 M18.5 12h3 M5.3 5.3l2.1 2.1 M16.6 16.6l2.1 2.1 M5.3 18.7l2.1-2.1 M16.6 7.4l2.1-2.1",
   moon: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z",
   monitor: "M3 4h18v12H3z M8 20h8 M12 16v4",
-  back: "M20 12H5 M11 6l-6 6 6 6",
   close: "M5 5l14 14 M19 5L5 19",
 
   // Actions
@@ -35,7 +32,6 @@ const PATHS = {
   folder: "M3 6h7l2 2h9v12H3z",
   refresh: "M3 4v6h6 M21 20v-6h-6 M20.5 9A8.5 8.5 0 0 0 5.6 5.6L3 10 M3.5 15a8.5 8.5 0 0 0 14.9 3.4L21 14",
   external: "M14 4h6v6 M20 4l-9 9 M18 14v6H4V6h6",
-  undo: "M4 9h11a5 5 0 0 1 0 10H9 M8 5L4 9l4 4",
   chevronUp: "M5 15l7-7 7 7",
   chevronDown: "M5 9l7 7 7-7",
   warning: "M12 3L2.5 20h19z M12 10v5 M12 17.5h.01",
@@ -51,7 +47,6 @@ const PATHS = {
 } as const;
 
 export type IconName = keyof typeof PATHS;
-export const ICON_NAMES = Object.keys(PATHS) as IconName[];
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (

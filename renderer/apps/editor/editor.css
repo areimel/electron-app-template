@@ -25,7 +25,8 @@
 .editor-preview ul, .editor-preview ol { padding-left: var(--sp-5); }
 .editor-preview li + li { margin-top: var(--sp-1); }
 .editor-preview li > ul, .editor-preview li > ol { margin: var(--sp-1) 0 0; }
-.editor-preview a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; cursor: default; }
+/* Links are inert (see markdown.ts): muted and dotted so they do not look clickable. */
+.editor-preview .md-link { color: var(--text-muted); text-decoration: underline dotted; text-underline-offset: 3px; cursor: default; }
 .editor-preview code { font-family: var(--font-mono); font-size: var(--fs-sm); padding: 0 var(--sp-1); background: var(--hover); border-radius: var(--r); }
 .editor-preview pre { padding: var(--sp-3); overflow-x: auto; background: var(--hover); border: var(--line-w) solid var(--line); border-radius: var(--r); }
 .editor-preview pre code { padding: 0; background: none; line-height: 1.6; }

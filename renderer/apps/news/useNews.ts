@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NewsFeed, NewsPage } from "../../../shared/ipc/news";
 import { isSuperseded } from "../../../shared/superseded";
+import { errorMessage } from "../../utils/errorMessage";
 
 export interface NewsState {
   /** Stories for the selected feed, or null until they arrive (a page for another feed is never shown). */
@@ -31,7 +32,7 @@ export function useNews(feed: NewsFeed): NewsState {
       },
       (e: unknown) => {
         if (id !== request.current || isSuperseded(e)) return;
-        const message = e instanceof Error ? e.message : String(e);
+        const message = errorMessage(e);
         setLoading(false);
         setError(message);
       },

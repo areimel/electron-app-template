@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SHELL_COMMANDS } from "../shared/commands";
 import type { AppDefinition } from "../renderer/apps/types";
-import { activeCommands, helpGroups, hintFor, menuContext } from "../renderer/shell/commandTable";
+import { activeCommands, helpGroups, hintFor, keyFor, menuContext } from "../renderer/shell/commandTable";
 
 const app = (id: string, commands: AppDefinition["commands"] = []): AppDefinition =>
   ({ id, name: id[0].toUpperCase() + id.slice(1), icon: "notes", summary: "", component: null as never, commands });
@@ -52,5 +52,17 @@ describe("hintFor", () => {
   it("adds the key to the label", () => {
     expect(hintFor(activeCommands(null, apps), "shell.palette", false)).toBe("Command palette (Ctrl+K)");
     expect(hintFor(activeCommands(null, apps), "go.tasks", true)).toBe("Go to Tasks (⌘2)");
+  });
+});
+
+describe("keyFor", () => {
+  const cmds = activeCommands(notes, apps);
+  it("gives the first key or accelerator as the table spells it", () => {
+    expect(keyFor(cmds, "shell.palette")).toBe("CmdOrCtrl+K");
+    expect(keyFor(cmds, "notes.new")).toBe("n");
+  });
+  it("is undefined for a command without one, or an unknown id", () => {
+    expect(keyFor(cmds, "notes.pin")).toBeUndefined();
+    expect(keyFor(cmds, "nope.nope")).toBeUndefined();
   });
 });

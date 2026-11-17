@@ -57,6 +57,8 @@
   padding: var(--sp-3) var(--sp-5); border-top: var(--line-w) solid var(--line);
 }
 
+.confirm-body { margin: 0; color: var(--text-muted); line-height: var(--lh-body); }
+
 /* Toasts: bottom right, above the title block. */
 .toast-host {
   position: fixed; right: var(--sp-4); bottom: calc(var(--footer-h) + var(--sp-3)); z-index: var(--z-toast);
@@ -70,6 +72,7 @@
   box-shadow: var(--shadow-float); font-size: var(--fs-md);
   animation: rise-in var(--dur) var(--ease);
 }
+.toast-actions { display: inline-flex; align-items: center; gap: var(--sp-1); }
 .toast-success { border-left-color: var(--success); }
 .toast-error { border-left-color: var(--danger); }
 .toast-info { border-left-color: var(--accent-text); }

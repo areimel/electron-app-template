@@ -14,6 +14,8 @@ export interface ShellApi {
   navigate(action: RouterAction): void;
   toast(kind: ToastKind, message: string, action?: ToastAction): void;
   confirm(o: ConfirmOptions): Promise<boolean>;
+  /** Tooltip text for a command id of the active sheet or the shell ("Pin note (Ctrl+P)"), from the command table. */
+  hint(id: string): string;
 }
 
 /** What the hooks below need from the shell but apps never see. */
@@ -40,6 +42,9 @@ function need<T>(v: T | null): T {
 }
 
 export function useShell(): ShellApi { return need(useContext(ApiContext)); }
+
+/** Tooltip text for a command id, read from the command table. */
+export function useHint(): (id: string) => string { return useShell().hint; }
 
 /** Sets the title block's count and save state while mounted, and clears them on unmount. */
 export function useTitleInfo(info: TitleInfo): void {

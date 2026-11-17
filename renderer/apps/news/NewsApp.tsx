@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { hint } from "../../../shared/commands";
 import type { NewsFeed, NewsItem } from "../../../shared/ipc/news";
 import { Button } from "../../components/common/Button";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -8,9 +7,8 @@ import { List, ListRow } from "../../components/common/List";
 import { Segmented } from "../../components/common/Segmented";
 import { Spinner } from "../../components/common/Spinner";
 import { Toolbar } from "../../components/common/Toolbar";
-import { useCommandHandlers, useShell, useTitleInfo } from "../../shell/ShellContext";
-import { IS_MAC } from "../../utils/platform";
-import { newsCommands } from "./index";
+import { useCommandHandlers, useHint, useShell, useTitleInfo } from "../../shell/ShellContext";
+import { errorMessage } from "../../utils/errorMessage";
 import { clockTime, plural, relativeTime } from "./relativeTime";
 import { useNews } from "./useNews";
 import "./news.css";
@@ -19,11 +17,9 @@ const FEEDS: { value: NewsFeed; label: string }[] = [
   { value: "top", label: "Top" }, { value: "new", label: "New" }, { value: "best", label: "Best" },
 ];
 
-const hintOf = (id: string) => hint(newsCommands.find((c) => c.id === id)!, IS_MAC);
-
 /** Opening is a request by story id: main looks the address up in its own cache. The page never holds a URL. */
 function open(id: number, target: "article" | "comments", fail: (m: string) => void): void {
-  window.app.invoke("news:open", id, target).catch((e: unknown) => fail(e instanceof Error ? e.message : String(e)));
+  window.app.invoke("news:open", id, target).catch((e: unknown) => fail(errorMessage(e)));
 }
 
 function metaLine(s: NewsItem, now: number): string {
@@ -33,6 +29,7 @@ function metaLine(s: NewsItem, now: number): string {
 
 export default function NewsApp() {
   const { toast } = useShell();
+  const hintOf = useHint();
   const [feed, setFeed] = useState<NewsFeed>("top");
   const { page, loading, error, refresh } = useNews(feed);
   const items = page?.items ?? [];

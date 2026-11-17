@@ -75,7 +75,7 @@ describe("renderMarkdown", () => {
   it("does not turn script URLs into links", () => {
     expect(renderMarkdown("[x](javascript:alert(1))")).not.toContain("<a ");
   });
-  it("links bare URLs", () => expect(renderMarkdown("see https://example.com")).toContain('<a href="https://example.com"'));
+  it("recognises bare URLs as (inert) links", () => expect(renderMarkdown("see https://example.com")).toContain('<span class="md-link" title="https://example.com">'));
   it("replaces images with their description", () => {
     const html = renderMarkdown("![a diagram](https://example.com/x.png)");
     expect(html).not.toContain("<img");

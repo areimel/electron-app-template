@@ -18,8 +18,8 @@ interface Options {
   navigate(action: RouterAction): void;
   togglePalette(): void;
   toggleHelp(): void;
-  /** False while a dialog owns the keyboard. */
-  shortcutsEnabled: boolean;
+  /** False while a dialog owns the keyboard: neither keys nor menu accelerators run commands then. */
+  commandsEnabled: boolean;
 }
 
 /**
@@ -43,11 +43,12 @@ export function useShellCommands(o: Options): void {
     return registry.register(handlers);
   }, [registry, navigate, togglePalette, toggleHelp, mode, setMode]);
 
-  useShortcuts(commands, registry.table, o.shortcutsEnabled);
+  useShortcuts(commands, registry.table, o.commandsEnabled);
 
   // The menu is built from the same table, but the page decides whether a command is live right now.
+  // The same enabled check as the keys: an open dialog must not be bypassed by an accelerator such as Ctrl+O.
   useAppEvent("menu:command", (id) => {
-    if (commands.some((c) => c.id === id)) registry.run(id);
+    if (o.commandsEnabled && commands.some((c) => c.id === id)) registry.run(id);
   });
 
   useEffect(() => {

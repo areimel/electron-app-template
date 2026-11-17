@@ -14,9 +14,3 @@ export const PLAYER_COMMANDS: readonly CommandSpec[] = [
   { id: "player.fullscreen", label: "Fullscreen video", group: "Player", keys: ["f"] },
   { id: "player.mute", label: "Mute or unmute", group: "Player", keys: ["m"] },
 ];
-
-export function command(id: string): CommandSpec {
-  const c = PLAYER_COMMANDS.find((x) => x.id === id);
-  if (!c) throw new Error(`Unknown player command: ${id}`);
-  return c;
-}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { keysOf, type CommandSpec } from "../../shared/commands";
 import { Dialog } from "../components/common/Dialog";
 import { Kbd } from "../components/common/Kbd";
@@ -16,6 +16,7 @@ interface Props {
 export function CommandPalette({ commands, onRun, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [at, setAt] = useState(0);
+  const listId = useId();
   const body = useRef<HTMLDivElement>(null);
   const hits = useMemo(() => filterCommands(query, commands), [query, commands]);
   const active = Math.min(at, Math.max(hits.length - 1, 0));
@@ -35,12 +36,15 @@ export function CommandPalette({ commands, onRun, onClose }: Props) {
         <TextField
           type="search" label="Search commands" hideLabel placeholder="Type a command" value={query}
           onChange={(v) => { setQuery(v); setAt(0); }} autoFocus
+          role="combobox" aria-autocomplete="list" aria-expanded={hits.length > 0}
+          aria-controls={hits.length ? listId : undefined}
+          aria-activedescendant={hits.length ? `${listId}-${active}` : undefined}
         />
         {hits.length ? (
-          <List label="Commands" className="palette-list">
+          <List id={listId} role="listbox" label="Commands" className="palette-list">
             {hits.map((c, i) => (
               <ListRow
-                key={c.id} selected={i === active} onSelect={() => run(c)}
+                key={c.id} optionId={`${listId}-${i}`} selected={i === active} onSelect={() => run(c)}
                 title={c.label} meta={c.group}
                 trailing={keysOf(c)[0] ? <Kbd k={keysOf(c)[0]} /> : undefined}
               />

@@ -15,7 +15,7 @@ import { ShellProvider, type ShellApi, type ShellInternals, type TitleInfo } fro
 import { ShortcutHelp } from "./ShortcutHelp";
 import { TitleBar } from "./TitleBar";
 import { TitleBlock } from "./TitleBlock";
-import { activeCommands, hintFor } from "./commandTable";
+import { activeCommands, hintFor, keyFor } from "./commandTable";
 import { createHandlerRegistry } from "./handlerRegistry";
 import { fire } from "./ipcSafe";
 import { titleBlockModel } from "./shellModel";
@@ -46,20 +46,20 @@ export function AppShell() {
 
   useShellCommands({
     registry, commands, activeApp: app, navigate, togglePalette, toggleHelp,
-    shortcutsEnabled: !paletteOpen && !helpOpen && !confirm.open,
+    commandsEnabled: !paletteOpen && !helpOpen && !confirm.open,
   });
   useShellEvents({ navigate, confirm: confirm.confirm, guardMessage });
 
   const name = app?.name ?? (route.view === "settings" ? "Settings" : "Sheet index");
   useEffect(() => { document.title = route.view === "home" ? brand.name : `${name} - ${brand.name}`; }, [route.view, name]);
 
+  const hintOf = useCallback((id: string) => hintFor(commands, id, IS_MAC), [commands]);
   const api = useMemo<ShellApi>(() => ({
     route, sheet: appIndex >= 0 ? { index: appIndex, total: APPS.length } : null,
-    navigate, toast: toasts.push, confirm: confirm.confirm,
-  }), [route, appIndex, navigate, toasts.push, confirm.confirm]);
+    navigate, toast: toasts.push, confirm: confirm.confirm, hint: hintOf,
+  }), [route, appIndex, navigate, toasts.push, confirm.confirm, hintOf]);
   const internals = useMemo<ShellInternals>(() => ({ registry, setTitleInfo, setGuard }), [registry, setGuard]);
 
-  const hintOf = (id: string) => hintFor(commands, id, IS_MAC);
   const logError = (e: Error) => fire(() => window.app.invoke("log:write", "error", `${name}: ${e.stack ?? e.message}`.slice(0, 2000)), "Writing the log");
   const runnable = paletteOpen ? commands.filter((c) => registry.has(c.id)) : [];
 
@@ -79,7 +79,7 @@ export function AppShell() {
     <ShellProvider api={api} internals={internals}>
       <div className="shell" data-view={route.view}>
         <TitleBar
-          name={name} mode={mode} hintOf={hintOf} onPalette={togglePalette}
+          name={name} mode={mode} hintOf={hintOf} paletteKey={keyFor(commands, "shell.palette")} onPalette={togglePalette}
           onCycleMode={() => registry.run("shell.cycleMode")} onSettings={() => navigate({ type: "settings" })}
         />
         {route.view !== "home" && <Rail apps={APPS} route={route} hintOf={hintOf} navigate={navigate} />}

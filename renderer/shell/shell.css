@@ -193,7 +193,6 @@ html, body, #root { height: 100%; }
 .palette { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 0; }
 .palette-list { max-height: 50vh; overflow-y: auto; }
 .palette-empty { margin: 0; padding: var(--sp-4) 0; color: var(--text-muted); }
-.confirm-body { margin: 0; color: var(--text-muted); line-height: var(--lh-body); }
 .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-5); }
 .help-group h3 {
   margin: 0 0 var(--sp-2);

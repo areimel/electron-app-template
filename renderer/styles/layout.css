@@ -27,7 +27,6 @@
   min-height: 48px; padding: var(--sp-2) var(--sp-3); border-bottom: var(--line-w) solid var(--line);
 }
 .toolbar-end { display: flex; align-items: center; flex: 1 1 0; justify-content: flex-end; gap: var(--sp-2); min-width: 0; margin-left: auto; }
-.toolbar-sep { align-self: stretch; width: var(--line-w); margin: var(--sp-1) var(--sp-1); background: var(--line); }
 
 .split-pane { display: grid; height: 100%; min-height: 0; }
 .split-pane-start { min-width: 0; min-height: 0; overflow: auto; border-right: var(--line-w) solid var(--line); }
@@ -50,3 +49,4 @@
   border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.list-row[role="option"] { cursor: pointer; }

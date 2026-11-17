@@ -9,10 +9,10 @@ import { Spinner } from "../../components/common/Spinner";
 import { TextField } from "../../components/common/TextField";
 import { useCollection } from "../../hooks/useCollection";
 import { useCommandHandlers, useShell, useTitleInfo } from "../../shell/ShellContext";
+import { errorMessage } from "../../utils/errorMessage";
 import { formatDue, isOverdue, moveVisible, taskCounts, visibleTasks, type TaskFilter } from "./tasksModel";
 import "./tasks.css";
 
-const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function TasksApp() {
   const { items, status, error, reload, create, update, remove, restore, reorder } = useCollection("tasks");
@@ -29,7 +29,7 @@ export default function TasksApp() {
   // Every write goes through here: a failure becomes a toast that says what happened.
   async function attempt(what: string, work: () => Promise<unknown>): Promise<boolean> {
     try { await work(); return true; } catch (e) {
-      toast("error", `Could not ${what}. ${reason(e)}`);
+      toast("error", `Could not ${what}. ${errorMessage(e)}`);
       return false;
     }
   }
@@ -51,7 +51,7 @@ export default function TasksApp() {
       // `removed` remembers the record and its position, so Undo puts it back where it was.
       toast("info", "Task deleted", { label: "Undo", run: () => void attempt("restore the task", () => restore(removed)) });
     } catch (e) {
-      toast("error", `Could not delete the task. ${reason(e)}`);
+      toast("error", `Could not delete the task. ${errorMessage(e)}`);
     }
   }
 
