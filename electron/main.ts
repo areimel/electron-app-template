@@ -10,6 +10,7 @@ import { setPreventSleep } from "./features/powerSave";
 import { createTray, hasTray } from "./features/tray";
 import { registerIpc } from "./ipc/index";
 import { buildMenu } from "./menu";
+import { applySettingsToNative } from "./store/settings";
 import { createWindow, getWindow, handleBeforeQuit, lockDownContents, lockDownSession, showWindow } from "./window";
 
 function shutdown(): void {
@@ -58,6 +59,7 @@ if (!app.requestSingleInstanceLock()) {
     registerMediaProtocol();
     registerIpc();
     openMainWindow();
+    applySettingsToNative();
     const win = getWindow();
     if (win) setupDevCapture(win);
     createTray();

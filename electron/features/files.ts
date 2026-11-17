@@ -41,8 +41,11 @@ export function readTextFile(path: string, maxBytes: number): string {
 export function writeTextFile(path: string, text: string): void {
   if (!isAbsolute(path)) throw new Error("Not a file path");
   const tmp = `${path}.${randomBytes(4).toString("hex")}.tmp`;
+  // Keep the document's own permissions (owner-only for a new file); "wx" never follows an existing temp path.
+  let mode = 0o600;
+  try { mode = statSync(path).mode & 0o777; } catch { /* new file */ }
   try {
-    writeFileSync(tmp, text, "utf8");
+    writeFileSync(tmp, text, { encoding: "utf8", mode, flag: "wx" });
     renameSync(tmp, path);
   } catch (e) {
     try { rmSync(tmp, { force: true }); } catch { /* ignore */ }

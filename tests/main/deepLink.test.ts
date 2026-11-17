@@ -48,4 +48,11 @@ describe("argvTargets", () => {
     expect(argvTargets(["electron", ".", "/tmp/a.MD"], "/x")).toEqual({ link: null, file: "/tmp/a.MD" });
     expect(argvTargets(["electron", ".", "app.sh", "app-template://bad"], "/x")).toEqual({ link: null, file: null });
   });
+  it("never takes a URL-shaped argument as a file", () => {
+    expect(argvTargets(["app", "app-template://open/../../etc/x.md"], "/x")).toEqual({ link: null, file: null });
+    expect(argvTargets(["app", "file:///etc/passwd.txt", "https://a.example/b.md", "other:thing.md"], "/x")).toEqual({ link: null, file: null });
+  });
+  it("stops at a -- separator", () => {
+    expect(argvTargets(["app", "--", "a.md"], "/x")).toEqual({ link: null, file: null });
+  });
 });

@@ -24,16 +24,21 @@ export function parseDeepLink(url: string): DeepLink | null {
 }
 
 const TEXT_FILE = /\.(md|markdown|txt)$/i;
+/** Anything shaped like a URL (`scheme:` followed by `//`, or our own scheme) is never a file path. */
+const URL_LIKE = /^[A-Za-z][A-Za-z0-9+.-]*:(\/\/|[^\\/])/;
 
 /** What a launch or second-instance command line asks for: the first deep link and the first text file. */
 export function argvTargets(argv: readonly string[], cwd: string): { link: DeepLink | null; file: string | null } {
   let link: DeepLink | null = null;
   let file: string | null = null;
   for (const arg of argv.slice(1)) {
-    if (typeof arg !== "string" || arg.startsWith("-")) continue;
-    if (!link) {
-      const parsed = parseDeepLink(arg);
-      if (parsed) { link = parsed; continue; }
+    if (typeof arg !== "string") continue;
+    if (arg === "--") break;
+    if (arg.startsWith("-")) continue;
+    // A Windows drive path (`C:\notes.md`) is a file; every other `scheme:` argument is a URL and stops here.
+    if (URL_LIKE.test(arg) && !isAbsolute(arg)) {
+      if (!link) link = parseDeepLink(arg);
+      continue;
     }
     if (!file && TEXT_FILE.test(arg)) file = isAbsolute(arg) ? arg : resolve(cwd, arg);
   }
