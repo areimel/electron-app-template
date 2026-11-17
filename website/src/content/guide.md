@@ -1,69 +1,82 @@
-## Before you tune in
+## Install
 
-CRT-TV is in public beta. Install it with the one-line command on the Download page, or download the `.deb` from GitHub Releases. In your app launcher it appears as **Shader Video Player**.
+Install the app from the Download page with the one-line installer. The installer finds the newest release, checks the package against the published checksums and installs it with apt. You can also download the `.deb` file from the GitHub releases page and install it yourself.
 
-The beta runs on **Linux x64**, on Wayland or X11. You will need `ffmpeg` and `ffprobe` installed and available on your PATH, plus a GPU that supports WebGL2 and floating-point render targets for the effects. The installer pulls in ffmpeg; otherwise `sudo apt install ffmpeg` installs it. Node and pnpm are needed only when building the app from source.
+The app is built for 64-bit Linux, on Debian, Ubuntu and derived systems. It runs under Wayland or X11.
 
-## Open your first video
+To build from source, clone the repository, then run these commands in its folder:
 
-Press **Ctrl+O** to choose a local video, or drop one into the player. MP4, MKV, WebM, MOV, and AVI are among the supported containers. When the browser engine cannot decode a file directly, the app uses ffmpeg to convert it during playback. Only local video files are supported; images, playlists, and network streams are not.
+```bash
+pnpm install
+pnpm dev
+```
 
-Use **Add library folder** or drop a folder onto the home screen to build your library. The player lists videos with their duration and file size, watches those folders for changes, and remembers playback positions. Press **Ctrl+W** to return home.
+`pnpm dev` starts the app with hot reloading. Building from source needs Node 24 and pnpm.
 
-## Settle in for a double feature
+## The main menu
 
-Open or drop several files to create a play queue. **Ctrl+Shift+O** or **Shift+drop** adds videos to the current queue. Use **N** and **P** to move between videos, and **L** to cycle between no loop, loop all, and loop one. The queue advances automatically when a video ends.
+The app opens on a ruled sheet index. Each numbered row opens one small demo app, and each demo teaches one skill you will need in a real desktop app.
 
-Playback controls also offer speed and audio-track selection. Picture-in-picture is available from the menu or controls; **F** toggles fullscreen.
-
-## Find your picture
-
-Press **Shift+E** to open the effects panel. Choose CRT or VHS from the effect selector, pick a preset, then adjust the controls to taste. Your settings are remembered between runs. Press **E** to switch the active effect off or on.
-
-CRT presets cover four starting points: **Consumer TV (composite)**, **Trinitron (S-Video)**, **Arcade monitor (RGB)**, and **Broadcast monitor (PVM)**. Tune scanlines, phosphor masks, glow, curvature, and signal artifacts. Scanlines become less pronounced in small windows so they do not turn into distracting aliasing.
-
-VHS has seven presets: **Home recording (SP)**, **Worn rental**, **Six-hour EP**, **Camcorder (date stamp)**, **VCR on a TV**, **Third-generation dub**, and **Bad tracking**. Choose Keep aspect, 4:3 crop, or 4:3 letterbox framing. The optional TV stage adds a simulated tube to the tape picture. VHS changes the picture only; audio stays untouched. The simulation models NTSC, not PAL or SECAM.
-
-## Subtitles and keepsakes
-
-Select an embedded subtitle track or use **Load Subtitle** for an external `.srt`, `.vtt`, or `.ass` file. A subtitle file with the same name as the video is picked up automatically. Subtitles stay sharp above the effect; adjust their size and timing in the player. **G** moves subtitles earlier and **H** moves them later. Image-based PGS and VobSub tracks are unsupported, and ASS styling is not preserved.
-
-Press **S** or **Ctrl+Shift+S** to save the current video frame as a PNG with the active effect applied.
-
-## Keep the remote handy
-
-| Action | Shortcut |
+| Demo | What it shows |
 | --- | --- |
-| Open a video | Ctrl+O |
-| Add to queue | Ctrl+Shift+O |
-| Return home | Ctrl+W |
-| Play / pause | Space |
-| Seek 5 seconds | Left / Right arrow |
-| Seek 30 seconds | Shift+Left / Right arrow |
-| Adjust volume | Up / Down arrow |
-| Mute | M |
-| Slower / faster | [ / ] |
-| Previous / next video | P / N |
-| Cycle loop mode | L |
-| Toggle remaining time | T |
-| Toggle effect | E |
-| Open effects panel | Shift+E |
-| Save screenshot | S or Ctrl+Shift+S |
-| Subtitles earlier / later | G / H |
-| Fullscreen | F |
-| File information | I |
-| Full shortcut guide | ? |
+| Notes | Creating, editing and deleting records through a shared collection hook, with search and autosave |
+| Tasks | Filtering and reordering a list, and undoing a delete from a toast |
+| Editor | Open and save dialogs, recent files, drag and drop, an unsaved-changes guard, file association and a Markdown preview |
+| Clipboard | Reading and writing the system clipboard, and keeping saved snippets |
+| Timer | State owned by the main process, with native notifications and a tray icon |
+| System info | Live data pushed from the main process while the window is subscribed |
+| News | API calls made through the main process, with a cache and loading, offline and error states |
+| Player | A custom file protocol with an allowlist, and fullscreen |
 
-These are playback shortcuts. Home-screen navigation uses its own menu controls. Press **Escape** to dismiss an open overlay.
+The numbers follow the order of the demo registry. Settings is part of the app frame, not a demo, so it is not on the sheet index.
 
-## When the signal needs a little help
+## Themes and settings
 
-**A video will not open.** Check that it is a real local video and that both `ffmpeg` and `ffprobe` are on PATH. Some files require conversion, which can take more CPU and restart when you seek.
+Three themes are included: Blueprint (the default), Graphite (neutral) and Kraft (warm paper). Each theme has a light and a dark variant. You can choose light or dark, or follow the system setting.
 
-**Effects turn themselves off.** The app falls back to plain playback if the required GPU features are unavailable. Check your graphics drivers and WebGL2 support.
+You can also pick an accent colour to replace the accent of the current theme. The choice is saved.
 
-**Playback feels heavy.** Press E to try plain playback. Shader effects require more GPU power, and a full video conversion can be CPU-intensive. 4K performance has not been measured yet.
+The Settings screen holds the theme editor and the data tools. Export writes your saved records to a file. Import reads that file back in. Reset clears the saved data so the app starts fresh.
 
-**Hardware decoding misbehaves.** Advanced users can launch the app with `SVP_NO_HWDEC=1` to disable its hardware decode switches. Hardware decoding depends on your GPU and drivers.
+## Where your data lives
 
-**The picture differs from your original.** Output is SDR; HDR is not preserved. CRT and VHS presets are still being tuned against more footage, so treat them as starting points.
+Saved data is kept as plain JSON files in the app's user data folder. The folder depends on your operating system. The files are:
+
+- `settings.json`: theme, mode and accent choices
+- `window-state.json`: window size and position
+- `recents.json`: recently opened files
+- `notes.json`: notes from the Notes demo
+- `tasks.json`: tasks from the Tasks demo
+- `snippets.json`: saved clipboard snippets
+
+Each collection file has a version number and a list of items. Writes go to a temporary file first and then replace the old file, so a crash during a save does not leave a half-written file behind.
+
+Every read checks the file's contents. A damaged or out-of-date file is repaired on read: bad parts are replaced with valid values and the app keeps running. It never crashes because a file is wrong. To keep a copy of a damaged file, copy it before you start the app.
+
+## Make it yours
+
+To rename the app, edit `shared/brand.ts`. It holds the name, the identifiers, the links and the default theme, so one file changes the whole app. If you publish a website for it, edit the files in the website's `src/config/` folder as well.
+
+To remove a demo, delete its folder under `renderer/apps/` and remove its line from `renderer/apps/registry.ts`. The menu, the navigation rail and the commands are built from the registry, so the demo disappears from all of them.
+
+To add a demo, create a folder under `renderer/apps/` with the demo's component, then add one line to `renderer/apps/registry.ts` with its id, name, icon, summary and commands. Reuse the shared hooks, such as `useCollection`, for saved records.
+
+## Security model
+
+- The renderer, which is the window's web page, runs sandboxed with context isolation. It is treated as untrusted code.
+- Every message from the page to the main process is declared in `shared/ipc.ts`, and the main process checks every argument before it uses it.
+- The page never supplies a file path. Files come from the system open and save dialogs, or from files dropped on the window.
+- Saved collections are addressed by allowlisted names, and records by opaque ids.
+- Media is served one file at a time, and only after the file's extension is checked.
+- External links must use https, and the main process opens them.
+- Network requests are made by the main process, and only to allowlisted hosts.
+
+## Troubleshooting
+
+**The app does not start on Wayland.** Start it from a terminal with `--ozone-platform=x11` added to the launch command. This runs the app under X11.
+
+**Settings are wrong or the app behaves oddly.** Close the app and delete `settings.json` from the user data folder. The app creates a fresh file with the defaults the next time it starts. You can also use Reset in Settings.
+
+**A saved file is damaged.** Close the app, copy the damaged file somewhere safe, then start the app again. The app repairs the file on read.
+
+**Something is broken.** Report it on the GitHub issue tracker linked from the Contact page. Include your Linux distribution, the version of the app and the steps that lead to the problem.
