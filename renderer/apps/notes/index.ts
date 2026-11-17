@@ -7,5 +7,10 @@ export const notes: AppDefinition = {
   icon: "notes",
   summary: "Records in a JSON collection: list, search, autosave",
   component: lazy(() => import("./NotesApp")),
-  commands: [],
+  commands: [
+    { id: "notes.new", label: "New note", group: "Notes", accelerator: "CmdOrCtrl+N" },
+    { id: "notes.search", label: "Search notes", group: "Notes", keys: ["/"] },
+    { id: "notes.pin", label: "Pin or unpin note", group: "Notes", keys: ["p"] },
+    { id: "notes.delete", label: "Delete note", group: "Notes", keys: ["Delete"] },
+  ],
 };
