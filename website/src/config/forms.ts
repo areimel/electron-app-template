@@ -16,6 +16,12 @@ export const formSettings = {
 /** Name of the signup consent checkbox; it is also the key in the submitted payload. */
 export const consentField = "launch_updates_consent";
 
+/** Copy for the signup section shown on the home and download pages. Feeds SignupSection. */
+export const signupSection = {
+  heading: "Follow new releases",
+  text: `Leave your email to hear when a new version of ${product.name} is published. You will not get anything else.`,
+};
+
 /** Labels, placeholders, notes and status messages. Feeds ContactForm and scripts/forms.ts. */
 export const forms = {
   signup: {

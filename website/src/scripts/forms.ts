@@ -1,11 +1,11 @@
-const endpoint = "https://api.web3forms.com/submit";
-const requestTimeoutMs = 15_000;
+import { consentField, formSettings, forms } from "../config/forms";
 
 for (const form of document.querySelectorAll<HTMLFormElement>("[data-contact-form]")) {
   const status = form.querySelector<HTMLElement>("[data-form-status]");
   const button = form.querySelector<HTMLButtonElement>("button[type=submit]");
   if (!status || !button) continue;
 
+  const kind = form.dataset.formKind === "signup" ? "signup" : "inquiry";
   const idleLabel = button.textContent;
   let pending = false;
 
@@ -18,23 +18,24 @@ for (const form of document.querySelectorAll<HTMLFormElement>("[data-contact-for
     event.preventDefault();
     if (pending) return;
     if (form.dataset.configured !== "true") {
-      announce("This form is not connected yet. Please check back soon.", "error");
+      announce(forms.status.unconfigured, "error");
       return;
     }
     if (!form.reportValidity()) return;
 
     const values = Object.fromEntries(new FormData(form));
     if (values.botcheck) return;
+    if (kind !== "signup") delete values[consentField];
     pending = true;
     button.disabled = true;
-    button.textContent = "Sending…";
+    button.textContent = forms.status.sendingButton;
     form.setAttribute("aria-busy", "true");
-    announce("Sending your details…", "pending");
+    announce(forms.status.sending, "pending");
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), requestTimeoutMs);
+    const timeout = window.setTimeout(() => controller.abort(), formSettings.timeoutMs);
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(formSettings.endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(values),
@@ -45,19 +46,9 @@ for (const form of document.querySelectorAll<HTMLFormElement>("[data-contact-for
         throw new Error("Submission rejected");
       }
       form.reset();
-      announce(
-        form.dataset.formKind === "signup"
-          ? "Thanks! Your request for launch updates has been received."
-          : "Message received. Thanks for getting in touch!",
-        "success",
-      );
+      announce(forms[kind].success, "success");
     } catch {
-      announce(
-        controller.signal.aborted
-          ? "The request timed out. Your details are still here; please try again."
-          : "We couldn't confirm delivery. Your details are still here; please try again.",
-        "error",
-      );
+      announce(controller.signal.aborted ? forms.status.timeout : forms.status.error, "error");
     } finally {
       window.clearTimeout(timeout);
       pending = false;
