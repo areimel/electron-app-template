@@ -1,22 +1,33 @@
-import { Menu } from "electron";
-import { SHELL_COMMANDS } from "../shared/commands";
-import { getWindow } from "./window";
+import { Menu, app } from "electron";
+import type { MenuContext } from "../shared/commands";
+import { emit } from "./ipc/handle";
 import { openLink, setAboutPanel } from "./features/links";
+import { buildTemplate, sanitizeMenuContext } from "./menuTemplate";
 
-// Placeholder menu; builder E replaces it with the menu built from SHELL_COMMANDS, goCommands and menu:set-context.
-function send(id: string): void {
-  getWindow()?.webContents.send("menu:command", id);
+// The native menu is generated: shell commands from shared/commands.ts, the Go menu and the active app's
+// menu from the context the renderer sends with menu:set-context (validated in sanitizeMenuContext).
+let context: MenuContext = { apps: [], app: null };
+let built = false;
+
+function rebuild(): void {
+  Menu.setApplicationMenu(Menu.buildFromTemplate(buildTemplate({
+    mac: process.platform === "darwin",
+    dev: !app.isPackaged,
+    context,
+    send: (id) => emit("menu:command", id),
+    openLink,
+  })));
 }
 
-let built = false;
 export function buildMenu(): void {
   if (!built) { built = true; setAboutPanel(); }
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { label: "File", submenu: [{ role: "quit" }] },
-    { role: "editMenu" },
-    { label: "View", submenu: SHELL_COMMANDS.filter((c) => c.group === "View").map((c) =>
-      ({ label: c.label, accelerator: c.accelerator, click: () => send(c.id) })) },
-    { role: "windowMenu" },
-    { label: "Help", submenu: [{ label: "Website", click: () => openLink("website") }] },
-  ]));
+  rebuild();
+}
+
+/** menu:set-context. Throws on a malformed context; skips the rebuild when nothing changed. */
+export function setMenuContext(raw: unknown): void {
+  const next = sanitizeMenuContext(raw);
+  if (JSON.stringify(next) === JSON.stringify(context)) return;
+  context = next;
+  rebuild();
 }
