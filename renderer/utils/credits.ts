@@ -1,4 +1,5 @@
-import type { Credits } from "./home/types";
+export interface Credits { version: string; author: string; thirdParty: string[] }
+
 import notices from "../../THIRD_PARTY_NOTICES.md?raw";
 
 /** The `## ` heading texts of THIRD_PARTY_NOTICES.md, in order. */

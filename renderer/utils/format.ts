@@ -7,12 +7,6 @@ export function formatTime(sec: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
 }
 
-/** Countdown label such as "-1:05"; without a finite positive duration it shows the elapsed time. */
-export function formatRemaining(time: number, duration: number): string {
-  if (!Number.isFinite(duration) || duration <= 0) return formatTime(time);
-  return `-${formatTime(Math.max(0, duration - time))}`;
-}
-
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   const units = ["KB", "MB", "GB", "TB"];
@@ -22,25 +16,6 @@ export function formatBytes(n: number): string {
   return `${v.toFixed(v >= 100 ? 0 : 1)} ${units[i]}`;
 }
 
-export function formatBitrate(bps: number): string {
-  if (!bps) return "—";
-  return bps >= 1_000_000 ? `${(bps / 1_000_000).toFixed(1)} Mbps` : `${Math.round(bps / 1000)} kbps`;
-}
-
 export function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
-}
-
-export function friendlyError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e);
-  const msg = raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, "");
-  if (/Could not read|No video stream/i.test(msg)) {
-    return "This file looks corrupt or isn't a playable video.";
-  }
-  return msg || "Something went wrong.";
-}
-
-export function trackLabel(t: { language: string; title: string; codec: string }, n: number): string {
-  const lang = t.language && t.language !== "und" ? t.language.toUpperCase() : "";
-  return [`Track ${n}`, t.title, lang, t.codec].filter(Boolean).join(" · ");
 }

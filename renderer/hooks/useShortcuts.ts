@@ -38,7 +38,7 @@ export function commandForKey(e: Pick<KeyboardEvent, "key" | "shiftKey">): Comma
  * nothing is open, but keep `shortcuts`). Commands without a handler are no-ops and the key is left
  * alone. `enabled` lets the caller suspend all shortcuts (e.g. while a modal owns the keyboard).
  */
-export function usePlayerShortcuts(enabled: boolean, handlers: CommandHandlers): void {
+export function useShortcuts(enabled: boolean, handlers: CommandHandlers): void {
   const ref = useLatest(handlers);
   useEffect(() => {
     if (!enabled) return;

@@ -1,5 +1,3 @@
-import { hint } from "../../shared/commands";
-import { IS_MAC } from "../utils/platform";
 import { IconButton } from "./common/IconButton";
 
 interface Props {
@@ -14,7 +12,7 @@ interface Props {
 export function TopBar({ visible, name, position, onBack }: Props) {
   return (
     <div className={`topbar ${visible ? "" : "is-hidden"}`} onDoubleClick={(e) => e.stopPropagation()}>
-      <IconButton icon="back" label={hint("close", IS_MAC)} onClick={onBack} />
+      <IconButton icon="back" label="Back" onClick={onBack} />
       <span className="topbar-name" title={name}>{name}</span>
       {position && <span className="topbar-pos">{position.index + 1} of {position.total}</span>}
     </div>

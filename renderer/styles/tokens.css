@@ -9,8 +9,6 @@
   --scrim: color-mix(in srgb, var(--bezel-deep) 60%, transparent);
   --panel-glass: color-mix(in srgb, var(--panel) 94%, transparent);
 
-  /* colour: the home screen's VCR on-screen display (plain colours: the canvas painter reads them) */
-  --tv-blue: #0b1cb0; --tv-navy: #050a4a; --tv-white: #f2f2e8; --tv-yellow: #ffd200; --tv-cyan: #3fe0e0; --tv-red: #ff3b30;
 
   /* type */
   --font: "Archivo Variable", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -28,7 +26,6 @@
 
   /* misc */
   --focus-ring: 0 0 0 2px var(--lamp);
-  --controls-h: 88px;
   --ease: cubic-bezier(.2, .7, .2, 1);
   --dur: 160ms;
 }

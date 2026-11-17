@@ -1,4 +1,4 @@
-import type { ChangelogEntry } from "./home/types";
+export interface ChangelogEntry { version: string; date: string; items: string[] }
 import raw from "../../CHANGELOG.md?raw";
 
 const HEADING_PREFIX = /^##\s/;

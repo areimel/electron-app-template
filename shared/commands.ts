@@ -2,7 +2,7 @@
  * Single source of truth for user commands. Consumed by the renderer shortcut dispatcher, the native
  * menu, button tooltips and the shortcut-help overlay. Add a command here, then give it a handler.
  */
-export type CommandGroup = "File" | "Playback" | "Subtitles" | "Effects" | "View";
+export type CommandGroup = "View";
 
 export interface CommandSpec {
   id: string;
@@ -16,43 +16,10 @@ export interface CommandSpec {
   menu?: boolean;
 }
 
-export const SEEK_STEP_SEC = 5;
-export const SEEK_LONG_SEC = 30;
-
-export const GROUP_ORDER: readonly CommandGroup[] = ["File", "Playback", "Subtitles", "Effects", "View"];
+export const GROUP_ORDER: readonly CommandGroup[] = ["View"];
 
 export const COMMANDS = [
-  { id: "open", label: "Open…", group: "File", accelerator: "CmdOrCtrl+O" },
-  { id: "addToQueue", label: "Add to Queue…", group: "File", accelerator: "CmdOrCtrl+Shift+O" },
-  { id: "addFolder", label: "Add library folder…", group: "File" },
-  { id: "close", label: "Close", group: "File", accelerator: "CmdOrCtrl+W" },
-  { id: "screenshot", label: "Screenshot", group: "File", keys: ["s"], accelerator: "CmdOrCtrl+Shift+S" },
-
-  { id: "togglePlay", label: "Play / Pause", group: "Playback", keys: [" "] },
-  { id: "seekBack", label: `Back ${SEEK_STEP_SEC} seconds`, group: "Playback", keys: ["ArrowLeft"] },
-  { id: "seekForward", label: `Forward ${SEEK_STEP_SEC} seconds`, group: "Playback", keys: ["ArrowRight"] },
-  { id: "seekBackLong", label: `Back ${SEEK_LONG_SEC} seconds`, group: "Playback", keys: ["Shift+ArrowLeft"] },
-  { id: "seekForwardLong", label: `Forward ${SEEK_LONG_SEC} seconds`, group: "Playback", keys: ["Shift+ArrowRight"] },
-  { id: "volumeUp", label: "Volume up", group: "Playback", keys: ["ArrowUp"] },
-  { id: "volumeDown", label: "Volume down", group: "Playback", keys: ["ArrowDown"] },
-  { id: "mute", label: "Mute", group: "Playback", keys: ["m"] },
-  { id: "speedDown", label: "Slower", group: "Playback", keys: ["["] },
-  { id: "speedUp", label: "Faster", group: "Playback", keys: ["]"] },
-  { id: "previous", label: "Previous", group: "Playback", keys: ["p"] },
-  { id: "next", label: "Next", group: "Playback", keys: ["n"] },
-  { id: "cycleLoop", label: "Cycle loop mode", group: "Playback", keys: ["l"] },
-  { id: "toggleRemaining", label: "Show remaining time", group: "Playback", keys: ["t"] },
-
-  { id: "loadSubtitle", label: "Load Subtitle…", group: "Subtitles" },
-  { id: "subtitleDelayDown", label: "Subtitles earlier", group: "Subtitles", keys: ["g"] },
-  { id: "subtitleDelayUp", label: "Subtitles later", group: "Subtitles", keys: ["h"] },
-
-  { id: "toggleEffect", label: "Toggle effect", group: "Effects", keys: ["e"] },
-  { id: "toggleEffectsPanel", label: "Effects panel", group: "Effects", keys: ["Shift+E"] },
-
   { id: "fullscreen", label: "Fullscreen", group: "View", keys: ["f"] },
-  { id: "info", label: "Info", group: "View", keys: ["i"] },
-  { id: "pip", label: "Picture in picture", group: "View" },
   { id: "shortcuts", label: "Keyboard shortcuts", group: "View", keys: ["?"] },
 ] as const satisfies readonly CommandSpec[];
 

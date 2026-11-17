@@ -4,21 +4,6 @@ import { Kbd } from "./common/Kbd";
 import { Panel, PanelHeader } from "./common/Panel";
 import { Button } from "./common/Button";
 
-const MOUSE = [
-  "Click video: play / pause",
-  "Double-click video: fullscreen",
-  "Double-click a setting: reset it",
-  "Shift + drop files: add to queue",
-];
-
-const HOME = [
-  "Up / Down: move in a list",
-  "Left / Right, Tab: next list",
-  "Page Up / Down, Home / End: jump",
-  "Enter or click: open, or apply the TV preset",
-  "Delete on a folder: remove it from the library",
-];
-
 const keysOf = (c: CommandSpec): string[] => (c.keys?.length ? [...c.keys] : c.accelerator ? [c.accelerator] : []);
 
 /** Modal overlay listing every command with keys, generated from COMMANDS. */
@@ -48,14 +33,6 @@ export function ShortcutHelp({ onClose }: { onClose: () => void }) {
               </ul>
             </section>
           ))}
-          <section className="help-group">
-            <h3>Home screen</h3>
-            <ul>{HOME.map((m) => <li key={m}><span>{m}</span></li>)}</ul>
-          </section>
-          <section className="help-group">
-            <h3>Mouse</h3>
-            <ul>{MOUSE.map((m) => <li key={m}><span>{m}</span></li>)}</ul>
-          </section>
         </div>
       </Panel>
     </div>

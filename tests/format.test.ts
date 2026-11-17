@@ -1,18 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { formatRemaining, formatTime } from "../renderer/utils/format";
+import { clamp, formatBytes, formatTime } from "../renderer/utils/format";
 
-describe("formatRemaining", () => {
-  it("shows the time left with a leading minus", () => {
-    expect(formatRemaining(60, 125)).toBe("-1:05");
-    expect(formatRemaining(0, 3725)).toBe("-1:02:05");
+describe("formatTime", () => {
+  it("formats minutes and hours", () => {
+    expect(formatTime(65)).toBe("1:05");
+    expect(formatTime(3725)).toBe("1:02:05");
   });
-  it("clamps to zero past the end", () => {
-    expect(formatRemaining(130, 125)).toBe("-0:00");
+  it("treats invalid input as zero", () => {
+    expect(formatTime(NaN)).toBe("0:00");
+    expect(formatTime(-5)).toBe("0:00");
   });
-  it("falls back to elapsed time without a finite positive duration", () => {
-    expect(formatRemaining(61, 0)).toBe(formatTime(61));
-    expect(formatRemaining(61, NaN)).toBe("1:01");
-    expect(formatRemaining(61, Infinity)).toBe("1:01");
-    expect(formatRemaining(61, -5)).toBe("1:01");
+});
+
+describe("formatBytes", () => {
+  it("scales units", () => {
+    expect(formatBytes(512)).toBe("512 B");
+    expect(formatBytes(1536)).toBe("1.5 KB");
+  });
+});
+
+describe("clamp", () => {
+  it("limits to the range", () => {
+    expect(clamp(5, 0, 3)).toBe(3);
+    expect(clamp(-1, 0, 3)).toBe(0);
   });
 });

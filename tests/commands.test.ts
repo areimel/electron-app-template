@@ -12,7 +12,7 @@ describe("commands table", () => {
   });
   it("every key and accelerator parses and formats", () => {
     for (const c of COMMANDS) {
-      const all = [...(("keys" in c ? c.keys : []) as readonly string[]), ...("accelerator" in c ? [c.accelerator] : [])];
+      const all = [...(("keys" in c ? c.keys : []) as readonly string[]), ...(("accelerator" in c ? [c.accelerator] : []) as string[])];
       for (const k of all) {
         expect(parseKey(k).key.length).toBeGreaterThan(0);
         expect(formatKey(k, false)).not.toBe("");
@@ -42,15 +42,13 @@ describe("formatKey", () => {
 
 describe("helpers", () => {
   it("isCommandId", () => {
-    expect(isCommandId("togglePlay")).toBe(true);
+    expect(isCommandId("fullscreen")).toBe(true);
     expect(isCommandId("nope")).toBe(false);
     expect(isCommandId(3)).toBe(false);
   });
   it("hint prefers key then accelerator", () => {
-    expect(hint("togglePlay")).toBe("Play / Pause (Space)");
-    expect(hint("open")).toBe("Open… (Ctrl+O)");
-    expect(hint("pip")).toBe("Picture in picture");
-    expect(commandById("screenshot").keys).toEqual(["s"]);
-    expect(hint("screenshot")).toBe("Screenshot (S)");
+    expect(hint("fullscreen")).toBe("Fullscreen (F)");
+    expect(hint("shortcuts")).toBe("Keyboard shortcuts (?)");
+    expect(commandById("fullscreen").keys).toEqual(["f"]);
   });
 });
