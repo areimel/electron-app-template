@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { brand } from "../shared/brand";
 import { isSuperseded, supersededError } from "../shared/superseded";
 
 describe("superseded error", () => {
+  it("carries a marker derived from the brand env prefix", () => {
+    expect(supersededError().message).toContain(`${brand.envPrefix}_SUPERSEDED`);
+  });
   it("is recognised directly and after IPC wrapping", () => {
     expect(isSuperseded(supersededError())).toBe(true);
     const wrapped = `Error invoking remote method 'media:restart': Error: ${supersededError().message}`;

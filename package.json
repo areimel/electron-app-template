@@ -1,8 +1,8 @@
 {
-  "name": "shader-video-player",
-  "productName": "Shader Video Player",
+  "name": "electron-app-template",
+  "productName": "App Template",
   "version": "0.3.0",
-  "description": "Desktop video player with real-time shader effects (CRT, VHS)",
+  "description": "A starter for desktop apps, one sheet per skill",
   "main": "dist-electron/main.js",
   "license": "MIT",
   "private": true,
@@ -12,7 +12,9 @@
     "build:electron": "node scripts/build-electron.mjs",
     "build": "pnpm typecheck && vite build && pnpm build:electron",
     "test": "vitest run",
-    "dist": "pnpm build && electron-builder --linux deb --x64"
+    "dist": "pnpm build && electron-builder --linux deb --x64",
+    "dist:win": "pnpm build && electron-builder --win nsis --x64",
+    "dist:mac": "pnpm build && electron-builder --mac dmg"
   },
   "dependencies": {
     "@fontsource/barlow": "^5.3.0",
@@ -36,11 +38,11 @@
     "wait-on": "^9.5.1"
   },
   "author": "Alec Reimel",
-  "homepage": "https://areimel.github.io/shader-video-player/",
+  "homepage": "https://example.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/areimel/shader-video-player.git"
+    "url": "https://github.com/areimel/electron-app-template.git"
   },
   "packageManager": "pnpm@11.22.0",
-  "desktopName": "shader-video-player.desktop"
+  "desktopName": "electron-app-template.desktop"
 }
