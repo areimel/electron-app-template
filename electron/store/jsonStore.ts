@@ -25,6 +25,31 @@ export function readJson<T>(name: string, heal: (raw: unknown) => T): T {
   return heal(raw);
 }
 
+export type JsonRead = { status: "missing" } | { status: "unreadable"; error: unknown } | { status: "ok"; value: unknown };
+
+/** Like readJson but says why there is nothing: no file, a file that cannot be read or parsed, or its parsed value. */
+export function readJsonFile(name: string): JsonRead {
+  let text: string;
+  try {
+    text = readFileSync(storePath(name), "utf8");
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "ENOENT" ? { status: "missing" } : { status: "unreadable", error };
+  }
+  try {
+    return { status: "ok", value: JSON.parse(text) };
+  } catch (error) {
+    return { status: "unreadable", error };
+  }
+}
+
+/** Moves a file that cannot be understood aside (`<name>.unreadable-<timestamp>`) so a write never destroys it. Returns the new path. */
+export function quarantineJson(name: string, now: number = Date.now()): string {
+  const from = storePath(name);
+  const to = `${from}.unreadable-${now}`;
+  renameSync(from, to);
+  return to;
+}
+
 /** Deletes `userData/<name>`; a missing file is fine. */
 export function removeJson(name: string): void {
   rmSync(storePath(name), { force: true });

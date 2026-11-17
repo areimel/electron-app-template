@@ -127,14 +127,107 @@ describe("collection CRUD", () => {
     expect(seen).toHaveBeenCalledTimes(2);
   });
 
-  it("a failing write does not throw", () => {
+});
+
+describe("a failed write", () => {
+  it("makes the mutation throw and leaves the in-memory state and listeners untouched", () => {
     const { io } = memory();
-    const c = createCollection(tasks, { ...io, write: () => { throw new Error("disk full"); } });
+    let full = false;
+    const c = createCollection(tasks, { ...io, write: (e) => { if (full) throw new Error("disk full"); io.write?.(e); } });
+    const a = c.create({ title: "a" });
+    const seen = vi.fn();
+    c.onChange(seen);
+    full = true;
+    expect(() => c.create({ title: "b" })).toThrow("Could not save your tasks: disk full");
+    expect(() => c.update(a.id, { done: true })).toThrow("disk full");
+    expect(() => c.remove(a.id)).toThrow("disk full");
+    expect(() => c.restore({ title: "z" }, 0)).toThrow("disk full");
+    expect(() => c.reorder([a.id])).toThrow("disk full");
+    expect(() => c.replaceAll([{ title: "x" }])).toThrow("disk full");
+    expect(c.list()).toEqual([a]);
+    expect(seen).not.toHaveBeenCalled();
+  });
+
+  it("clear throws when the file cannot be removed", () => {
+    const c = createCollection(tasks, { ...memory().io, remove: () => { throw new Error("EACCES"); } });
+    c.create({ title: "a" });
+    expect(() => c.clear()).toThrow("EACCES");
+    expect(c.list()).toHaveLength(1);
+  });
+});
+
+describe("missing, damaged and newer files", () => {
+  const rec = (n: number) => ({ id: id(n), title: `t${n}`, done: false, due: null, createdAt: 1, updatedAt: 2 });
+
+  it("a missing file is empty and nothing is quarantined", () => {
+    const quarantine = vi.fn();
+    const c = createCollection(tasks, { ...memory().io, quarantine });
+    c.create({ title: "a" });
+    expect(quarantine).not.toHaveBeenCalled();
+  });
+
+  it("a damaged file is moved aside once, before the first write, then the collection carries on empty", () => {
+    for (const raw of [null, 5, "x", [], {}, { version: 1 }, { version: 1, items: "no" }, { version: "1", items: [] }]) {
+      const { io, state } = memory(raw);
+      const order: string[] = [];
+      const c = createCollection(tasks, {
+        ...io,
+        quarantine: () => { order.push("quarantine"); },
+        write: (e) => { order.push("write"); io.write?.(e); },
+      });
+      expect(c.list(), JSON.stringify(raw)).toEqual([]);
+      expect(order).toEqual([]);                    // reading alone changes nothing
+      c.create({ title: "a" });
+      c.create({ title: "b" });
+      expect(order, JSON.stringify(raw)).toEqual(["quarantine", "write", "write"]);
+      expect(state.writes).toBe(2);
+    }
+  });
+
+  it("an unreadable file (read throws) is treated as damaged", () => {
+    const quarantine = vi.fn();
+    const c = createCollection(tasks, { read: () => { throw new SyntaxError("bad json"); }, write: () => {}, quarantine });
+    expect(c.list()).toEqual([]);
+    c.create({ title: "a" });
+    expect(quarantine).toHaveBeenCalledTimes(1);
+  });
+
+  it("when the file cannot be moved aside, the write is refused and the file is not replaced", () => {
+    const { io, state } = memory("garbage");
+    const c = createCollection(tasks, { ...io, quarantine: () => { throw new Error("EPERM"); } });
+    expect(() => c.create({ title: "a" })).toThrow("EPERM");
+    expect(state.writes).toBe(0);
+    expect(state.file).toBe("garbage");
+    expect(c.list()).toEqual([]);
+  });
+
+  it("a file from a newer version is read-only: every operation throws and nothing is written or moved", () => {
+    const { io, state } = memory({ version: 2, items: [rec(1)] });
+    const quarantine = vi.fn();
+    const c = createCollection(tasks, { ...io, quarantine });
+    const msg = "These tasks were saved by a newer version of the app. Update the app to open them.";
+    expect(() => c.list()).toThrow(msg);
+    expect(() => c.get(id(1))).toThrow(msg);
+    expect(() => c.create({ title: "a" })).toThrow(msg);
+    expect(() => c.update(id(1), {})).toThrow(msg);
+    expect(() => c.remove(id(1))).toThrow(msg);
+    expect(() => c.restore(rec(1), 0)).toThrow(msg);
+    expect(() => c.reorder([])).toThrow(msg);
+    expect(() => c.replaceAll([])).toThrow(msg);
+    expect(state.writes).toBe(0);
+    expect(state.file).toEqual({ version: 2, items: [rec(1)] });
+    expect(quarantine).not.toHaveBeenCalled();
+  });
+
+  it("an explicit clear (reset) lifts the read-only state", () => {
+    const c = createCollection(tasks, memory({ version: 2, items: [rec(1)] }).io);
+    c.clear();
+    expect(c.list()).toEqual([]);
     expect(c.create({ title: "a" }).title).toBe("a");
   });
 });
 
-describe("collection loading never throws", () => {
+describe("collection loading", () => {
   const rec = (n: number, extra = {}) => ({ id: id(n), title: `t${n}`, done: false, due: null, createdAt: 1, updatedAt: 2, ...extra });
 
   it("reads a valid file as is", () => {
@@ -151,10 +244,6 @@ describe("collection loading never throws", () => {
   it("a throwing read reads as empty", () => {
     const c = createCollection(tasks, { read: () => { throw new Error("EACCES"); } });
     expect(c.list()).toEqual([]);
-  });
-
-  it("a newer version envelope is not understood and reads as empty", () => {
-    expect(createCollection(tasks, memory({ version: 2, items: [rec(1)] }).io).list()).toEqual([]);
   });
 
   it("an older version envelope is still healed", () => {

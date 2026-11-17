@@ -17,8 +17,9 @@ export interface Collection<F> {
 
 /** What the pure core needs from the outside. All optional, so tests run it in memory. */
 export interface CollectionIo {
-  read?: () => unknown;                                        // the parsed file, or undefined
-  write?: (envelope: { version: number; items: unknown[] }) => void;
+  read?: () => unknown;                                        // the parsed file; undefined = no file; throws = unreadable
+  write?: (envelope: { version: number; items: unknown[] }) => void;   // throws when the data could not be saved
+  quarantine?: () => void;                                     // moves an unreadable file aside; throws if it cannot
   remove?: () => void;
   now?: () => number;
   newId?: () => string;
@@ -61,35 +62,57 @@ export function createCollection<F>(spec: CollectionSpec<F>, io: CollectionIo = 
     return out;
   }
 
-  /** `{version, items}`. A file from a newer version is not understood and reads as empty; anything damaged too. */
+  // `{version, items}`. Missing reads as empty. A file that exists but is not an envelope is "damaged": it is
+  // moved aside before the first write, then the collection carries on empty. A file from a newer version is
+  // "newer": the collection is read-only and the file is never touched. Nothing is silently destroyed.
+  let damaged = false;
+  let newer = false;
+
   function load(): R[] {
     let raw: unknown;
-    try { raw = io.read?.(); } catch { raw = undefined; }
-    if (!isObject(raw) || !finite(raw.version) || raw.version > spec.version) return [];
+    try { raw = io.read?.(); } catch { damaged = true; return []; }
+    if (raw === undefined) return [];
+    if (!isObject(raw) || !finite(raw.version)) { damaged = true; return []; }
+    if (raw.version > spec.version) { newer = true; return []; }
+    if (!Array.isArray(raw.items)) { damaged = true; return []; }
     return healItems(raw.items);
   }
 
   let items: R[] = load();
 
-  function commit(next: R[], persist = true): void {
-    items = next;
-    if (persist) {
-      try { io.write?.({ version: spec.version, items }); } catch { /* persistence is non-fatal */ }
+  /** Throws for a collection from a newer version, before anything reads or changes. */
+  const open = (): void => {
+    if (newer) throw new Error(`These ${spec.name} were saved by a newer version of the app. Update the app to open them.`);
+  };
+
+  /** Saves, then adopts `next`. A failed write throws and leaves the previous state in place. */
+  function commit(next: R[]): void {
+    if (damaged) {
+      try { io.quarantine?.(); } catch (e) { throw new Error(`Could not save your ${spec.name}: ${reason(e)}`); }
+      damaged = false;
     }
+    try { io.write?.({ version: spec.version, items: next }); } catch (e) { throw new Error(`Could not save your ${spec.name}: ${reason(e)}`); }
+    publish(next);
+  }
+
+  function publish(next: R[]): void {
+    items = next;
     const snapshot = items.slice();
     for (const cb of [...listeners]) {
       try { cb(snapshot); } catch { /* one bad listener must not stop the others */ }
     }
   }
 
+  const reason = (e: unknown): string => (e instanceof Error ? e.message : String(e));
   const indexOf = (id: string): number => items.findIndex((r) => r.id === id);
   const full = (): void => { if (items.length >= spec.max) throw new Error(`Limit reached: ${spec.max} ${spec.name}`); };
   const unusable = (): never => { throw new Error(`Invalid ${spec.name} record`); };
 
   return {
-    list: () => items.slice(),
-    get: (id) => items.find((r) => r.id === id),
+    list: () => { open(); return items.slice(); },
+    get: (id) => { open(); return items.find((r) => r.id === id); },
     create(input) {
+      open();
       full();
       const fields = spec.heal(input) ?? unusable();
       const t = now();
@@ -98,6 +121,7 @@ export function createCollection<F>(spec: CollectionSpec<F>, io: CollectionIo = 
       return rec;
     },
     update(id, patch) {
+      open();
       const i = indexOf(id);
       if (i < 0) throw new Error("Not found");
       if (!isObject(patch)) unusable();
@@ -108,6 +132,7 @@ export function createCollection<F>(spec: CollectionSpec<F>, io: CollectionIo = 
       return rec;
     },
     remove(id) {
+      open();
       const i = indexOf(id);
       if (i < 0) throw new Error("Not found");
       const record = items[i];
@@ -115,6 +140,7 @@ export function createCollection<F>(spec: CollectionSpec<F>, io: CollectionIo = 
       return { record, index: i };
     },
     restore(record, index) {
+      open();
       full();
       const rec = toRecord(record, new Set(items.map((r) => r.id))) ?? unusable();
       const at = Number.isInteger(index) ? Math.min(Math.max(index, 0), items.length) : items.length;
@@ -122,16 +148,18 @@ export function createCollection<F>(spec: CollectionSpec<F>, io: CollectionIo = 
       return rec;
     },
     reorder(ids) {
+      open();
       const byId = new Map(items.map((r) => [r.id, r]));
       if (!Array.isArray(ids) || ids.length !== items.length || new Set(ids).size !== ids.length || !ids.every((id) => byId.has(id))) {
         throw new Error("Order must list every id exactly once");
       }
       commit(ids.map((id) => byId.get(id) as R));
     },
-    replaceAll: (raw) => commit(healItems(raw)),
-    clear() {
-      try { io.remove?.(); } catch { /* the file may not exist */ }
-      commit([], false);
+    replaceAll(raw) { open(); commit(healItems(raw)); },
+    clear() {                                    // an explicit reset: also clears a newer or damaged file
+      io.remove?.();
+      damaged = newer = false;
+      publish([]);
     },
     onChange(cb) {
       listeners.add(cb);

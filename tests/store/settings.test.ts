@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SETTINGS_VERSION, defaultSettings, healSettings, healSettingsPatch } from "../../shared/settings";
+import { SETTINGS_VERSION, classifySettingsFile, defaultSettings, healSettings, healSettingsPatch } from "../../shared/settings";
 
 describe("defaultSettings", () => {
   it("matches the contract defaults", () => {
@@ -27,6 +27,17 @@ describe("healSettings", () => {
   });
   it("also accepts bare values (an import bundle)", () => {
     expect(healSettings({ theme: "graphite" }).theme).toBe("graphite");
+  });
+});
+
+describe("classifySettingsFile", () => {
+  it("tells usable, newer and damaged files apart", () => {
+    expect(classifySettingsFile({ version: 1, values: { theme: "kraft" } })).toBe("ok");
+    expect(classifySettingsFile({ theme: "kraft" })).toBe("ok");
+    expect(classifySettingsFile({ version: SETTINGS_VERSION + 1, values: {} })).toBe("newer");
+    for (const raw of [null, 4, "x", [], { version: 1 }, { values: {} }, { version: "1", values: {} }, { version: 1, values: 7 }]) {
+      expect(classifySettingsFile(raw), JSON.stringify(raw)).toBe("damaged");
+    }
   });
 });
 

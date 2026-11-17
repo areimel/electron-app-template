@@ -1,6 +1,7 @@
 import { COLLECTIONS, type CollectionName, type FieldsOf } from "../../shared/collections";
 import { createCollection, type Collection } from "./collectionCore";
-import { readJson, removeJson, writeJson } from "./jsonStore";
+import { log } from "../features/logger";
+import { quarantineJson, readJsonFile, removeJson, writeJson } from "./jsonStore";
 
 export type { Collection };
 export { createCollection };
@@ -14,8 +15,17 @@ export function collection<N extends CollectionName>(name: N): Collection<Fields
     const spec = COLLECTIONS[name];
     const file = `${spec.name}.json`;
     c = createCollection<unknown>(spec as { name: string; version: number; max: number; heal(raw: unknown): unknown }, {
-      read: () => readJson(file, (raw) => raw),
-      write: (envelope) => { writeJson(file, envelope); },
+      read: () => {
+        const r = readJsonFile(file);
+        if (r.status === "unreadable") throw r.error;
+        return r.status === "ok" ? r.value : undefined;
+      },
+      write: (envelope) => { if (!writeJson(file, envelope)) throw new Error("the file could not be written"); },
+      quarantine: () => {
+        try { log.warn("store", `${file} is unreadable; moved to ${quarantineJson(file)}`); } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;   // already gone: nothing to protect
+        }
+      },
       remove: () => removeJson(file),
     });
     cache.set(name, c);

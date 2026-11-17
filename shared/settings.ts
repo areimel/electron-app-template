@@ -37,6 +37,17 @@ export function healSettingsPatch(raw: unknown): Partial<Settings> {
 }
 
 /**
+ * What a parsed settings.json is: usable (`ok`, including a bare values object), written by a newer
+ * version (`newer`: read defaults, never overwrite), or not settings at all (`damaged`).
+ */
+export function classifySettingsFile(raw: unknown): "ok" | "newer" | "damaged" {
+  if (!isObject(raw)) return "damaged";
+  if (!isObject(raw.values)) return "values" in raw || "version" in raw ? "damaged" : "ok";
+  if (typeof raw.version !== "number") return "damaged";
+  return raw.version > SETTINGS_VERSION ? "newer" : "ok";
+}
+
+/**
  * Accepts the stored envelope `{ version, values }` or a bare values object. A file written by a newer
  * version (higher `version`) is not understood and gives the defaults; missing or bad keys get defaults.
  */

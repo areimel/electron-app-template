@@ -38,11 +38,20 @@ describe("bundle", () => {
     }
   });
 
-  it("ignores unknown collections and heals a malformed body to empty lists and default settings", () => {
+  it("ignores unknown collections; a malformed body gives no collections and no settings", () => {
     const b = healBundle({ format: brand.packageName, version: 1, collections: { notes: "no", evil: [1], constructor: [1] }, settings: 7 });
-    expect(b?.collections).toEqual({ notes: [], tasks: [], snippets: [] });
-    expect(b?.settings).toEqual(defaultSettings());
+    expect(b?.collections).toEqual({});
+    expect(b?.settings).toEqual({});
     expect(b?.exportedAt).toBe("");
+  });
+
+  it("returns only the collections and settings the file contains, so a partial import leaves the rest alone", () => {
+    const b = healBundle({ format: brand.packageName, version: 1, collections: { tasks: [{ title: "x" }] }, settings: { mode: "dark", theme: "nope" } });
+    expect(Object.keys(b?.collections ?? {})).toEqual(["tasks"]);
+    expect(b?.settings).toEqual({ mode: "dark" });
+    const empty = healBundle({ format: brand.packageName, version: 1, collections: { notes: [] } });
+    expect(empty?.collections).toEqual({ notes: [] });     // an empty list is present: it replaces
+    expect(empty?.settings).toEqual({});
   });
 
   it("items inside a bundle are healed on import, not trusted", () => {
