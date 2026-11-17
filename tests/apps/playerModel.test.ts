@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PLAYER_COMMANDS } from "../../renderer/apps/player/playerModel";
-import { extensionOf, isAudioName, isMediaExtension, MEDIA_EXTENSIONS, mimeForName } from "../../renderer/apps/player/playerModel";
+import { extensionOf, isAudioName, isMediaExtension, MEDIA_EXTENSIONS, mimeForName } from "../../shared/mediaTypes";
 import { COMMAND_ID } from "../../shared/commands";
 
 describe("playerModel", () => {

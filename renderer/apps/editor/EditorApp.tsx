@@ -40,7 +40,7 @@ export default function EditorApp() {
   };
 
   const text = doc && (
-    <TextArea mono hideLabel label="Document text" value={doc.text} onChange={editor.edit} spellCheck={false} />
+    <TextArea mono fill hideLabel label="Document text" value={doc.text} onChange={editor.edit} spellCheck={false} />
   );
 
   return (

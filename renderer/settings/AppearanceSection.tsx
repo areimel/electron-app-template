@@ -9,7 +9,6 @@ import { TextField } from "../components/common/TextField";
 import { useSettings } from "../hooks/useSettings";
 import { useSystemDark } from "../theme/useTheme";
 import { ThemePicker } from "./ThemePicker";
-import { sampleTokens } from "./themeSamples";
 import { accentIsHardToRead, normalizeHex } from "./themeTokens";
 
 const MODES: { value: ModeSetting; label: string }[] = [
@@ -20,8 +19,13 @@ export function AppearanceSection() {
   const [settings, update] = useSettings();
   const dark = useSystemDark();
   const mode = resolveMode(settings.mode, dark);
-  const tokens = sampleTokens(settings.theme, mode);
-  const shown = settings.accent ?? tokens["--accent"] ?? "#000000";
+  // The theme's own accent and surface, read from the page once the theme has been applied.
+  const [themed, setThemed] = useState({ accent: "", surface: "" });
+  useEffect(() => {
+    const cs = getComputedStyle(document.documentElement);
+    setThemed({ accent: cs.getPropertyValue("--accent").trim(), surface: cs.getPropertyValue("--surface").trim() });
+  }, [settings.theme, mode, settings.accent]);
+  const shown = settings.accent ?? themed.accent;
 
   const save = (patch: Partial<Settings>) => { update(patch).catch((e: unknown) => console.error("Could not save settings:", e)); };
 
@@ -55,11 +59,11 @@ export function AppearanceSection() {
             <input type="color" className="accent-swatch" aria-label="Accent colour" value={shown}
               onChange={(e) => save({ accent: e.target.value })} />
             <TextField label="Accent hex colour" hideLabel className="accent-hex" value={draft} maxLength={7} spellCheck={false}
-              aria-invalid={invalid} onChange={onHex} onBlur={onBlur} />
+              invalid={invalid} onChange={onHex} onBlur={onBlur} />
             <Button variant="quiet" disabled={settings.accent === null} onClick={() => save({ accent: null })}>Use theme accent</Button>
           </div>
           {invalid && <p className="settings-note is-error" role="alert">Enter a hex colour such as #3366cc.</p>}
-          {!invalid && settings.accent && accentIsHardToRead(settings.accent, tokens["--surface"] ?? "") && (
+          {!invalid && settings.accent && accentIsHardToRead(settings.accent, themed.surface) && (
             <p className="settings-note is-warning" role="status">
               <Icon name="warning" size={16} />
               This accent is hard to read on the current background.

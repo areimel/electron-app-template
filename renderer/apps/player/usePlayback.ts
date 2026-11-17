@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MediaFile } from "../../../shared/ipc/player";
 import { clamp } from "../../utils/format";
-import { UNSUPPORTED_MESSAGE } from "./playerModel";
+import { UNSUPPORTED_MESSAGE } from "../../../shared/mediaTypes";
 
 /** Native-only playback: which file is open, and the <video> element's state mirrored into React. */
 export function usePlayback() {

@@ -38,7 +38,7 @@
   .settings .field-hint { grid-area: hint; }
 }
 
-/* Theme samples: swatch chips, each drawn with its own theme's tokens (set inline from its stylesheet). */
+/* Theme samples: swatch chips, each swatch carries its own data-theme and data-mode. */
 .theme-picker { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .theme-chip {
   display: grid; gap: var(--sp-2); width: 140px; padding: var(--sp-1);

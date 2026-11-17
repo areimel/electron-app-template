@@ -28,6 +28,11 @@
 }
 .btn-link:hover:not(:disabled) { text-decoration-thickness: 2px; }
 
+/* Toggle buttons: `aria-pressed` drives the look. */
+.btn[aria-pressed="true"], .btn[aria-pressed="true"]:hover:not(:disabled) {
+  background: var(--selected); border-color: var(--accent-text); color: var(--accent-text);
+}
+
 /* Icon button: borderless, square. `.dropdown-btn` lets it carry text. */
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
@@ -37,7 +42,7 @@
   transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .icon-btn:hover:not(:disabled) { background: var(--hover); }
-.icon-btn.is-active { background: var(--selected); color: var(--accent-text); }
+.icon-btn.is-active, .icon-btn[aria-pressed="true"] { background: var(--selected); color: var(--accent-text); }
 
 /* Switch */
 .switch {

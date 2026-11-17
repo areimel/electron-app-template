@@ -1,5 +1,6 @@
 /* Blueprint: an engineering drawing set. Light "Vellum", dark "Cyanotype". */
-:root[data-theme="blueprint"][data-mode="light"] {
+:root[data-theme="blueprint"][data-mode="light"],
+[data-theme="blueprint"][data-mode="light"] {
   --bg: #eef2f6;
   --surface: #fbfcfe;
   --surface-raised: #ffffff;
@@ -13,7 +14,8 @@
   --danger-ink: #ffffff;
   --success: #1f7a4d;
 }
-:root[data-theme="blueprint"][data-mode="dark"] {
+:root[data-theme="blueprint"][data-mode="dark"],
+[data-theme="blueprint"][data-mode="dark"] {
   --bg: #0f2a52;
   --surface: #163868;
   --surface-raised: #1d4478;

@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { EmptyState } from "../../components/common/EmptyState";
 import { Icon } from "../../components/common/Icon";
 import { List, ListRow } from "../../components/common/List";
@@ -8,12 +9,13 @@ import { displayTitle, shortDate } from "./notesModel";
 /** The search box and the notes that match it. `notes` is already filtered and sorted. */
 export function NoteList(p: {
   notes: Note[]; query: string; onQuery(q: string): void; selectedId: string | null; onSelect(id: string): void;
+  searchRef?: Ref<HTMLInputElement>;
 }) {
   const now = Date.now();
   return (
     <div className="notes-list-pane">
       <div className="notes-search">
-        <TextField label="Search notes" hideLabel type="search" placeholder="Search notes" value={p.query} onChange={p.onQuery} />
+        <TextField ref={p.searchRef} label="Search notes" hideLabel type="search" placeholder="Search notes" value={p.query} onChange={p.onQuery} />
       </div>
       {p.notes.length === 0 ? (
         <EmptyState title="No notes match" body={`Nothing contains "${p.query.trim()}". Try fewer words.`} />

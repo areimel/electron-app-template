@@ -13,9 +13,9 @@ import "./notes.css";
 const reason = (e: unknown) => (e instanceof Error ? e.message : "unknown error");
 
 export default function NotesApp() {
-  const { items, status, error, create, remove, restore, update } = useCollection("notes");
+  const { items, status, error, reload, create, remove, restore, update } = useCollection("notes");
   const { route, toast, confirm } = useShell();
-  const root = useRef<HTMLDivElement>(null);
+  const search = useRef<HTMLInputElement>(null);
   // A deep link (route.recordId) selects a note. After that the selection is ours.
   const [selectedId, setSelectedId] = useState<string | null>(route.view === "app" ? route.recordId : null);
   const [justCreated, setJustCreated] = useState<string | null>(null);
@@ -63,19 +63,20 @@ export default function NotesApp() {
 
   useCommandHandlers({
     "notes.new": () => void newNote(),
-    "notes.search": () => root.current?.querySelector<HTMLInputElement>(".notes-search input")?.focus(),
+    "notes.search": () => search.current?.focus(),
     "notes.pin": togglePin,
     "notes.delete": () => void deleteSelected(),
   });
 
   const newButton = <Button icon="plus" onClick={() => void newNote()}>New note</Button>;
-  const frame = (children: React.ReactNode) => <div className="app-root notes" ref={root}>{children}</div>;
+  const frame = (children: React.ReactNode) => <div className="app-root notes">{children}</div>;
 
   if (status === "loading") return frame(<Spinner label="Loading notes" />);
   if (status === "error") {
     return frame(
       <EmptyState icon="warning" title="Notes could not be loaded"
-        body={`${error ?? "The notes file could not be read."} Restart the app. If this keeps happening, open the data folder from Settings.`} />,
+        body={`${error ?? "The notes file could not be read."} If this keeps happening, open the data folder from Settings.`}
+        action={<Button onClick={reload}>Try again</Button>} />,
     );
   }
   if (items.length === 0) {
@@ -86,7 +87,7 @@ export default function NotesApp() {
     <SplitPane label="Notes" startWidth="300px"
       start={(
         <>
-          <NoteList notes={shown} query={query} onQuery={setQuery} selectedId={selectedId} onSelect={select} />
+          <NoteList searchRef={search} notes={shown} query={query} onQuery={setQuery} selectedId={selectedId} onSelect={select} />
           <div className="notes-new">{newButton}</div>
         </>
       )}

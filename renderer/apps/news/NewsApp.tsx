@@ -64,7 +64,7 @@ export default function NewsApp() {
       <List label={`${FEEDS.find((f) => f.value === feed)?.label} stories`}>
         {items.map((s) => (
           <ListRow key={s.id}
-            title={<><span className="news-title">{s.title}</span><span className="news-meta">{metaLine(s, now)}</span></>}
+            title={s.title} secondary={metaLine(s, now)} wrap
             // No host means no link (an Ask HN post): the row opens the discussion instead.
             onSelect={() => open(s.id, s.host ? "article" : "comments", failOpen)}
             trailing={s.host ? <Button variant="link" aria-label={`Comments on ${s.title}`}
@@ -76,11 +76,11 @@ export default function NewsApp() {
 
   return (
     <div className="app-root news">
-      <Toolbar label="News">
-        <Segmented label="Feed" options={FEEDS} value={feed} onChange={setFeed} />
-        <span className="toolbar-spacer" />
+      <Toolbar label="News" end={<>
         {loading && page && <Spinner label="Refreshing" />}
         <IconButton icon="refresh" label={hintOf("news.refresh")} onClick={refresh} disabled={loading} />
+      </>}>
+        <Segmented label="Feed" options={FEEDS} value={feed} onChange={setFeed} />
       </Toolbar>
       {page?.offline && items.length > 0 && (
         <p className="news-notice" role="status">You're offline. Showing stories from {clockTime(page.fetchedAt)}.</p>

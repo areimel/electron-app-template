@@ -2,15 +2,13 @@
 .editor { display: flex; flex-direction: column; }
 .editor.is-dropping { outline: var(--focus-w) dashed var(--accent-text); outline-offset: calc(var(--focus-w) * -1); }
 .editor-body { flex: 1; min-height: 0; }
-.editor .text-area-wrap { height: 100%; }
 .editor-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); }
 
-.editor .toolbar .btn[aria-pressed="true"] { background: var(--selected); border-color: var(--accent-text); color: var(--accent-text); }
-.editor-file { flex: 1 1 0; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-md); }
+.editor-file { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-md); }
 .editor-folder { color: var(--text-muted); font-size: var(--fs-sm); }
 
 /* The text area fills its pane: no box of its own, the pane's rule is the edge. */
-.editor .text-area { height: 100%; min-height: 0; border: 0; border-radius: 0; resize: none; padding: var(--sp-4); }
+.editor .text-area { border: 0; border-radius: 0; padding: var(--sp-4); }
 .editor .text-area:focus-visible { outline-offset: calc(var(--focus-w) * -1); }
 
 .editor-preview { padding: var(--sp-5); font-size: var(--fs-lg); line-height: var(--lh-body); overflow-wrap: anywhere; min-height: 100%; }

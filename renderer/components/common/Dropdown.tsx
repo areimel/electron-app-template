@@ -13,6 +13,8 @@ interface Props<T extends string | number> {
   label: string;
   options: Option<T>[];
   selected: T;
+  /** Greys the button out. An empty option list does the same. */
+  disabled?: boolean;
   buttonText?: string;
   onSelect: (v: T) => void;
   /** Which side the menu opens on. Default "below". */
@@ -26,8 +28,13 @@ export function Dropdown<T extends string | number>(p: Props<T>) {
   const btn = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLUListElement>(null);
 
+  const unavailable = p.disabled || p.options.length === 0;
   const close = (refocus: boolean) => { setOpen(false); if (refocus) btn.current?.focus(); };
-  const show = () => { setActive(Math.max(0, p.options.findIndex((o) => o.value === p.selected))); setOpen(true); };
+  const show = () => {
+    if (unavailable) return;
+    setActive(Math.max(0, p.options.findIndex((o) => o.value === p.selected)));
+    setOpen(true);
+  };
   useDismiss(ref, (reason) => close(reason === "escape"), { enabled: open });
 
   useEffect(() => {
@@ -37,6 +44,7 @@ export function Dropdown<T extends string | number>(p: Props<T>) {
   const choose = (v: T) => { p.onSelect(v); close(true); };
   const onMenuKey = (e: KeyboardEvent) => {
     const n = p.options.length;
+    if (n === 0) return;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") setActive((a) => (a + (e.key === "ArrowDown" ? 1 : n - 1)) % n);
     else if (e.key === "Home") setActive(0);
     else if (e.key === "End") setActive(n - 1);
@@ -50,13 +58,13 @@ export function Dropdown<T extends string | number>(p: Props<T>) {
   return (
     <div className={`dropdown ${p.className ?? ""}`} ref={ref}>
       <button type="button" ref={btn} className="icon-btn dropdown-btn" title={p.label} aria-label={p.label}
-        aria-haspopup="listbox" aria-expanded={open} onClick={() => (open ? close(false) : show())}
+        aria-haspopup="listbox" aria-expanded={open} disabled={unavailable} onClick={() => (open ? close(false) : show())}
         onKeyDown={(e) => { if (!open && e.key === "ArrowDown") { e.preventDefault(); e.stopPropagation(); show(); } }}>
         {p.icon && <Icon name={p.icon} />}
         {p.buttonText && <span className="dropdown-text">{p.buttonText}</span>}
         {p.buttonText && <Icon name="chevronDown" size={14} />}
       </button>
-      {open && (
+      {open && !unavailable && (
         <ul className={`dropdown-menu ${p.placement === "above" ? "is-above" : ""}`.trim()} role="listbox" aria-label={p.label} ref={menu} onKeyDown={onMenuKey}>
           {p.options.map((o, i) => {
             const on = o.value === p.selected;

@@ -1,4 +1,4 @@
-/* News sheet. Rows reuse .list-row; these rules add the second line and the offline notice. */
+/* News sheet. Rows are plain ListRows; these rules add the offline notice. */
 .news { display: flex; flex-direction: column; min-height: 0; }
 .news-body { flex: 1; min-height: 0; overflow-y: auto; }
 .news-loading { display: grid; justify-items: center; gap: var(--sp-3); padding: var(--sp-7) var(--sp-5); color: var(--text-muted); }
@@ -6,9 +6,3 @@
   margin: 0; padding: var(--sp-2) var(--sp-3); border-bottom: var(--line-w) solid var(--line);
   box-shadow: inset 3px 0 0 var(--accent-text); background: var(--hover); font-size: var(--fs-sm);
 }
-.news .list-row { align-items: flex-start; }
-.news .list-row-title { flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--sp-2) 0; }
-.news .list-row-text { display: block; overflow: visible; white-space: normal; width: 100%; }
-.news-title { display: block; font-size: var(--fs-lg); line-height: var(--lh-tight); overflow-wrap: anywhere; }
-.news-meta { display: block; font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.news .list-row-trailing { align-self: center; }

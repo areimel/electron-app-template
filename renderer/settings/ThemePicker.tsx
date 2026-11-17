@@ -1,13 +1,12 @@
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { THEMES, type ResolvedMode, type ThemeId } from "../../shared/theme";
 import { Icon } from "../components/common/Icon";
-import { sampleTokens } from "./themeSamples";
 
 interface Props { value: ThemeId; mode: ResolvedMode; onChange(id: ThemeId): void }
 
 const STEP: Record<string, number> = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
 
-/** One chip per theme, each drawn with that theme's own tokens (in the mode currently shown). */
+/** One chip per theme. Each swatch carries its own data-theme and data-mode, so it draws with that theme's tokens. */
 export function ThemePicker({ value, mode, onChange }: Props) {
   const current = THEMES.findIndex((t) => t.id === value);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -26,7 +25,7 @@ export function ThemePicker({ value, mode, onChange }: Props) {
         return (
           <button key={t.id} type="button" role="radio" aria-checked={on} tabIndex={on ? 0 : -1}
             className={`theme-chip ${on ? "is-selected" : ""}`} onClick={() => onChange(t.id)}>
-            <span className="theme-art" data-theme={t.id} data-mode={mode} style={sampleTokens(t.id, mode) as CSSProperties} aria-hidden="true">
+            <span className="theme-art" data-theme={t.id} data-mode={mode} aria-hidden="true">
               <span className="theme-art-sheet">
                 <span className="theme-art-title" />
                 <span className="theme-art-line" />

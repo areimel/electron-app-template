@@ -13,19 +13,18 @@ const tip = (id: string): string => {
 export function EditorToolbar(p: { editor: Editor; preview: boolean; onTogglePreview(): void }) {
   const { doc, recents } = p.editor;
   return (
-    <Toolbar label="File">
+    <Toolbar label="File" end={<>
+      <span className="editor-file" title={doc ? `${doc.name} in ${doc.folder}` : undefined}>
+        {doc && <><strong>{doc.name}</strong> <span className="editor-folder">{doc.folder}</span></>}
+      </span>
+      <Button variant="quiet" aria-pressed={p.preview} disabled={!doc} title={tip("editor.preview")} onClick={p.onTogglePreview}>Preview</Button>
+    </>}>
       <Button variant="quiet" icon="plus" title={tip("editor.new")} onClick={p.editor.newFile}>New</Button>
       <Button variant="quiet" icon="folder" title={tip("editor.open")} onClick={p.editor.openDialog}>Open</Button>
       <Button variant="quiet" icon="save" title={tip("editor.save")} disabled={!doc} onClick={p.editor.save}>Save</Button>
       <Button variant="quiet" title={tip("editor.saveAs")} disabled={!doc} onClick={p.editor.saveAs}>Save as</Button>
-      {recents.length > 0 && (
-        <Dropdown label="Open a recent file" buttonText="Recent" selected="" onSelect={p.editor.openRecent}
-          options={recents.map((r) => ({ value: r.id, label: `${r.name} in ${r.folder}` }))} />
-      )}
-      <span className="toolbar-spacer editor-file" title={doc?.folder}>
-        {doc && <><strong>{doc.name}</strong> <span className="editor-folder">{doc.folder}</span></>}
-      </span>
-      <Button variant="quiet" aria-pressed={p.preview} disabled={!doc} title={tip("editor.preview")} onClick={p.onTogglePreview}>Preview</Button>
+      <Dropdown label="Open a recent file" buttonText="Recent" selected="" onSelect={p.editor.openRecent}
+        disabled={recents.length === 0} options={recents.map((r) => ({ value: r.id, label: `${r.name} in ${r.folder}` }))} />
     </Toolbar>
   );
 }

@@ -1,5 +1,6 @@
 /* Kraft: warm paper with a dark ink. */
-:root[data-theme="kraft"][data-mode="light"] {
+:root[data-theme="kraft"][data-mode="light"],
+[data-theme="kraft"][data-mode="light"] {
   --bg: #efe6d6;
   --surface: #faf5ec;
   --surface-raised: #fffdf8;
@@ -13,7 +14,8 @@
   --danger-ink: #ffffff;
   --success: #2e6b3a;
 }
-:root[data-theme="kraft"][data-mode="dark"] {
+:root[data-theme="kraft"][data-mode="dark"],
+[data-theme="kraft"][data-mode="dark"] {
   --bg: #2b2219;
   --surface: #362b20;
   --surface-raised: #413428;

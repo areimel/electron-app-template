@@ -57,15 +57,13 @@ export function NoteEditor(p: {
 
   return (
     <div className="notes-editor" onBlur={() => void save(false)}>
-      <Toolbar label="Note actions">
+      <Toolbar label="Note actions" end={<Button variant="quiet" icon="trash" onClick={p.onDelete}>Delete note</Button>}>
         <Button variant="quiet" icon="pin" onClick={p.onPin}>{p.note.pinned ? "Unpin note" : "Pin note"}</Button>
-        <span className="toolbar-spacer" />
-        <Button variant="quiet" icon="trash" onClick={p.onDelete}>Delete note</Button>
       </Toolbar>
       <div className="notes-fields">
         <TextField label="Title" placeholder="Untitled note" autoFocus={p.autoFocus} maxLength={200}
           value={draft.title} onChange={(title) => change({ ...draft, title })} />
-        <TextArea label="Note" placeholder="Write something" maxLength={100_000}
+        <TextArea fill label="Note" placeholder="Write something" maxLength={100_000}
           value={draft.body} onChange={(body) => change({ ...draft, body })} />
       </div>
     </div>

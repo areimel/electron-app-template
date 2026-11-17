@@ -15,12 +15,12 @@ import "./tasks.css";
 const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function TasksApp() {
-  const { items, status, error, create, update, remove, restore, reorder } = useCollection("tasks");
+  const { items, status, error, reload, create, update, remove, restore, reorder } = useCollection("tasks");
   const { toast, confirm } = useShell();
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
-  const titleInput = useRef<HTMLDivElement>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
 
   const counts = taskCounts(items);
   const visible = visibleTasks(items, filter);
@@ -34,7 +34,7 @@ export default function TasksApp() {
     }
   }
 
-  const focusAdd = () => titleInput.current?.querySelector("input")?.focus();
+  const focusAdd = () => titleInput.current?.focus();
 
   async function add() {
     if (title.trim() === "") { focusAdd(); return; }
@@ -82,7 +82,7 @@ export default function TasksApp() {
     return (
       <div className="app-root tasks tasks-center">
         <EmptyState icon="warning" title="Tasks could not be loaded"
-          body={`${error ?? "The file could not be read."} Go to another sheet and back to try again.`} />
+          body={error ?? "The file could not be read."} action={<Button onClick={reload}>Try again</Button>} />
       </div>
     );
   }
@@ -93,13 +93,9 @@ export default function TasksApp() {
   return (
     <div className="app-root tasks">
       <form className="tasks-add" onSubmit={(e) => { e.preventDefault(); void add(); }}>
-        <div ref={titleInput} className="tasks-add-title">
-          <TextField label="New task" hideLabel placeholder="What needs doing?" maxLength={500} value={title} onChange={setTitle} />
-        </div>
-        <label className="text-field tasks-add-due">
-          <span className="visually-hidden">Due date (optional)</span>
-          <input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-        </label>
+        <TextField ref={titleInput} className="tasks-add-title" label="New task" hideLabel placeholder="What needs doing?"
+          maxLength={500} value={title} onChange={setTitle} />
+        <TextField className="tasks-add-due" type="date" label="Due date (optional)" hideLabel value={due} onChange={setDue} />
         <Button type="submit" icon="plus">Add task</Button>
       </form>
 
@@ -109,7 +105,7 @@ export default function TasksApp() {
           { value: "active", label: `Active ${counts.active}` },
           { value: "done", label: `Done ${counts.done}` },
         ]} />
-        <Button variant="quiet" className="toolbar-spacer" onClick={() => void clearDone()} disabled={counts.done === 0}>Clear finished</Button>
+        <Button variant="quiet" className="tasks-clear" onClick={() => void clearDone()} disabled={counts.done === 0}>Clear finished</Button>
       </div>
 
       <div className="tasks-body">
@@ -123,7 +119,6 @@ export default function TasksApp() {
           <List label="Tasks">
             {visible.map((t, i) => (
               <ListRow key={t.id} title={<span className={t.done ? "task-done" : ""}>{t.title}</span>}
-                onSelect={() => void attempt("update the task", () => update(t.id, { done: !t.done }))}
                 leading={<input type="checkbox" className="checkbox" checked={t.done} aria-label={`Done: ${t.title}`}
                   onChange={(e) => void attempt("update the task", () => update(t.id, { done: e.target.checked }))} />}
                 meta={t.due && <span className={isOverdue(t) ? "task-overdue" : ""}>{isOverdue(t) ? "Overdue, " : "Due "}{formatDue(t.due)}</span>}

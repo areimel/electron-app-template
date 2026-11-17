@@ -60,6 +60,8 @@ export function useCollection<N extends CollectionName>(name: N): {
   remove(id: string): Promise<Removed<RecordOf<N>>>;
   restore(removed: Removed<RecordOf<N>>): Promise<void>;
   reorder(ids: string[]): Promise<void>;
+  /** Reads the list again after a failed load. */
+  reload(): void;
 } {
   const subscribe = useCallback((cb: () => void) => {
     const s = storeFor(name);
@@ -77,5 +79,11 @@ export function useCollection<N extends CollectionName>(name: N): {
     reorder: (ids: string[]) => window.app.invoke("data:reorder", name, ids),
   }), [name]);
 
-  return { items: snap.items as RecordOf<N>[], status: snap.status, error: snap.error, ...api };
+  const reload = useCallback(() => {
+    const s = storeFor(name);
+    if (s.snap.status === "error") set(s, { items: [], status: "loading", error: null });
+    load(name);
+  }, [name]);
+
+  return { items: snap.items as RecordOf<N>[], status: snap.status, error: snap.error, reload, ...api };
 }

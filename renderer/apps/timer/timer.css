@@ -5,7 +5,7 @@
 /* The one large element. Tabular figures keep every digit the same width, so the clock does not jitter. */
 .timer-clock {
   font-family: var(--font-display); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums;
-  font-size: 160px; line-height: 1; letter-spacing: 0; color: var(--text);
+  font-size: var(--fs-display); line-height: 1; letter-spacing: 0; color: var(--text);
 }
 
 /* A dimension line: end ticks, a hairline, and the elapsed part drawn in the accent. */

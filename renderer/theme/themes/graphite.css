@@ -1,5 +1,6 @@
 /* Graphite: plain greys that sit quietly next to native apps. */
-:root[data-theme="graphite"][data-mode="light"] {
+:root[data-theme="graphite"][data-mode="light"],
+[data-theme="graphite"][data-mode="light"] {
   --bg: #f1f2f4;
   --surface: #fcfcfd;
   --surface-raised: #ffffff;
@@ -13,7 +14,8 @@
   --danger-ink: #ffffff;
   --success: #1f7a4d;
 }
-:root[data-theme="graphite"][data-mode="dark"] {
+:root[data-theme="graphite"][data-mode="dark"],
+[data-theme="graphite"][data-mode="dark"] {
   --bg: #23272c;
   --surface: #2c3137;
   --surface-raised: #353b42;

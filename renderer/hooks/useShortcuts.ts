@@ -18,6 +18,20 @@ export function commandForKey(commands: readonly CommandSpec[], e: Pick<Keyboard
   return undefined;
 }
 
+/** The part of an element `ignoresKey` looks at; a real `HTMLElement` fits. */
+export interface KeyTarget { tagName?: string; isContentEditable?: boolean; closest(selector: string): unknown }
+
+// A focused control owns Space and Enter: they activate it, so they must not also run a command.
+const ACTIVATABLE = 'button, a[href], summary, [role="button"], [role="radio"], [role="switch"], [role="checkbox"], [role="tab"], [role="menuitem"], [role="option"], [role="slider"]';
+
+/** True when a keydown belongs to what has focus (typing, a modifier chord, or a control's activation key) and no command may take it. */
+export function ignoresKey(e: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey">, t: KeyTarget | null): boolean {
+  if (e.metaKey || e.ctrlKey || e.altKey) return true;
+  const tag = t?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable) return true;
+  return (e.key === " " || e.key === "Enter") && !!t?.closest(ACTIVATABLE);
+}
+
 /**
  * Keyboard dispatcher for plain-key commands. A command without a handler is a no-op and the key is left
  * alone. `enabled` lets the caller suspend all shortcuts (e.g. while a dialog owns the keyboard).
@@ -28,11 +42,7 @@ export function useShortcuts(commands: readonly CommandSpec[], handlers: Record<
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      const tag = t?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
-      // Space/Enter on a focused control activates that control, not a global command.
-      if ((e.key === " " || e.key === "Enter") && t?.closest('button, a[href], [role="radio"], [role="switch"], [role="option"], [role="slider"]')) return;
+      if (ignoresKey(e, e.target as HTMLElement | null)) return;
       const id = commandForKey(cmds.current, e);
       const h = id ? hs.current[id] : undefined;
       if (!h) return;

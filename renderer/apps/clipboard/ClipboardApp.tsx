@@ -91,7 +91,10 @@ export default function ClipboardApp() {
           <h2 id="clipboard-snippets">Snippets</h2>
           <Button variant="quiet" icon="plus" onClick={newSnippet}>New snippet</Button>
         </div>
-        {store.status === "error" && <p className="clipboard-note">Could not load your snippets: {store.error}. Restart the app and try again.</p>}
+        {store.status === "error" && (
+          <EmptyState icon="warning" title="Snippets could not be loaded" body={store.error ?? "The file could not be read."}
+            action={<Button onClick={store.reload}>Try again</Button>} />
+        )}
         {store.status === "ready" && store.items.length === 0 && (
           <EmptyState icon="clipboard" title="Save text you paste often"
             body="Snippets are kept on this computer and copy back to the clipboard in one click."
@@ -104,7 +107,7 @@ export default function ClipboardApp() {
             <List label="Snippets">
               {shown.map((s) => (
                 <ListRow key={s.id} onSelect={() => setEditing({ id: s.id, label: s.label, text: s.text })}
-                  title={<>{s.label || labelFrom(s.text)}{s.label && <span className="clipboard-preview">{s.text.replace(/\s+/g, " ")}</span>}</>}
+                  title={s.label || labelFrom(s.text)} secondary={s.label ? s.text.replace(/\s+/g, " ") : undefined}
                   trailing={<>
                     <Button variant="quiet" icon="copy" onClick={() => { void copy(s.text); }}>Copy</Button>
                     <IconButton icon="trash" label={`Delete ${s.label || "snippet"}`} onClick={() => { void remove(s); }} />

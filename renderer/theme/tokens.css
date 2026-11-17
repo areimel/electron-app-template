@@ -3,8 +3,10 @@
    --danger --danger-ink --success. Everything here follows the theme and the accent override.
    --accent-text is the accent when it is used as text or a thin line (it can be darker than --accent
    on light themes). --control-border draws control boundaries; --line is for decorative rules only. */
-:root {
-  /* Derived colour */
+/* Derived colour. Custom properties are resolved where they are declared, so this block also applies to any
+   element that carries its own data-theme and data-mode (the Settings swatches) and re-derives from that
+   element's base tokens instead of inheriting <html>'s. */
+:root, [data-theme][data-mode] {
   --hover: color-mix(in srgb, var(--text) 7%, transparent);
   --selected: color-mix(in srgb, var(--accent) 16%, transparent);
   --scrim: color-mix(in srgb, var(--bg) 72%, transparent);
@@ -12,12 +14,22 @@
   --control-border: var(--text-muted);                        /* 3:1 non-text contrast */
   --focus: var(--accent-text);
   --shadow-float: 0 6px 20px color-mix(in srgb, var(--text) 18%, transparent);  /* floating panels and dialogs only */
+}
 
+/* A surface that is dark in every theme and mode (the Player's picture area), in the theme's hue.
+   --media-ink is readable on it. */
+:root {
+  --media-bg: color-mix(in srgb, black 84%, var(--text));
+  --media-ink: color-mix(in srgb, white 90%, var(--media-bg));
+}
+
+:root {
   /* Type */
   --font-text: "Barlow", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-display: "Barlow Condensed", "Barlow", "Arial Narrow", sans-serif;
   --font-mono: ui-monospace, "DejaVu Sans Mono", monospace;   /* the Editor's text area only */
   --fs-xs: 12px; --fs-sm: 13px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 26px; --fs-3xl: 34px;
+  --fs-display: 160px;   /* the Timer clock only */
   --fw-regular: 400; --fw-medium: 500; --fw-bold: 600;
   --lh-tight: 1.2; --lh-body: 1.5;
 
@@ -37,8 +49,8 @@
   --titlebar-h: 40px; --rail-w: 56px; --footer-h: 48px; --content-max: 960px;
 }
 
-:root[data-mode="light"] { color-scheme: light; }
-:root[data-mode="dark"] {
+:root[data-mode="light"], [data-theme][data-mode="light"] { color-scheme: light; }
+:root[data-mode="dark"], [data-theme][data-mode="dark"] {
   color-scheme: dark;
   /* On a dark sheet the shadow is darker than the ground; a light one would read as a glow. */
   --shadow-float: 0 8px 24px rgb(0 0 0 / 0.4);

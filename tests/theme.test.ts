@@ -14,7 +14,8 @@ type Palette = Record<(typeof TOKENS)[number], string>;
 
 function parse(theme: ThemeId, mode: (typeof MODES)[number]): Record<string, string> {
   const css = readFileSync(resolve(__dirname, `../renderer/theme/themes/${theme}.css`), "utf8");
-  const block = new RegExp(`:root\\[data-theme="${theme}"\\]\\[data-mode="${mode}"\\]\\s*\\{([^}]*)\\}`).exec(css);
+  const sel = `\\[data-theme="${theme}"\\]\\[data-mode="${mode}"\\]`;   // `:root[...][...], [...][...] {`: root and any element
+  const block = new RegExp(`:root${sel},\\s*${sel}\\s*\\{([^}]*)\\}`).exec(css);
   if (!block) throw new Error(`no ${theme} ${mode} block`);
   return Object.fromEntries([...block[1].matchAll(/--([a-z-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)].map((m) => [m[1], m[2]]));
 }
