@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { brand } from "../shared/brand";
 import type { Settings } from "../shared/settings";
 import { WINDOW_BG } from "../shared/theme";
+import { appUrl } from "./features/appProtocol";
 import { emit } from "./ipc/handle";
 import { log } from "./features/logger";
 import { getSettings, onSettingsChanged } from "./store/settings";
@@ -15,7 +16,8 @@ let win: BrowserWindow | null = null;
 let guard: string | null = null;      // set by the renderer while there is unsaved work
 let guardConfirmed = false;           // the renderer confirmed the close
 let quitting = false;                 // the app is going down; let close through
-let quitAfterConfirm = false;
+let quitAfterConfirm = false;         // a guarded quit is waiting for the renderer's answer
+let rendererStuck = false;            // the page is hung: it cannot answer, so it cannot hold the window open
 
 export function getWindow(): BrowserWindow | null {
   return win && !win.isDestroyed() ? win : null;
@@ -46,7 +48,7 @@ function boundsOverride(): WindowState["bounds"] | undefined {
 export function createWindow(opts: { canHideToTray: () => boolean; onClosed?: () => void }): BrowserWindow {
   const settings = getSettings();
   nativeTheme.themeSource = settings.mode;
-  guard = null; guardConfirmed = false;
+  dropGuard(); rendererStuck = false;
 
   const override = boundsOverride();
   const state = fitToDisplays(loadWindowState(), screen.getAllDisplays().map((d) => d.workArea));
@@ -72,7 +74,13 @@ export function createWindow(opts: { canHideToTray: () => boolean; onClosed?: ()
 
   w.once("ready-to-show", () => w.show());
   w.webContents.once("did-fail-load", (_e, code, desc) => { log.error("window", `Renderer failed to load: ${desc} (${code})`); w.show(); });
-  w.webContents.on("render-process-gone", (_e, d) => log.error("window", `Renderer process gone: ${d.reason}`));
+  // A crashed or hung page cannot answer "close-requested". Without this the guard would keep the window
+  // (and the app) from closing. A hung page that recovers ("responsive") holds the guard again.
+  w.webContents.on("render-process-gone", (_e, d) => { log.error("window", `Renderer process gone: ${d.reason}`); dropGuard(); rendererStuck = true; });
+  w.webContents.on("unresponsive", () => { log.warn("window", "Renderer is not responding; closing is no longer held"); rendererStuck = true; });
+  w.webContents.on("responsive", () => { rendererStuck = false; });
+  // A new page (reload, recovery after a crash) starts without unsaved work.
+  w.webContents.on("did-start-navigation", (e) => { if (e.isMainFrame && !e.isSameDocument) { dropGuard(); rendererStuck = false; } });
 
   // Keeps the ground colour in step with the theme so resizes and reloads never flash the wrong one.
   const paint = (): void => { if (!w.isDestroyed()) w.setBackgroundColor(backgroundFor(getSettings())); };
@@ -82,7 +90,11 @@ export function createWindow(opts: { canHideToTray: () => boolean; onClosed?: ()
   w.on("close", (e) => {
     if (quitting) return;
     if (getSettings().closeToTray && opts.canHideToTray()) { e.preventDefault(); w.hide(); return; }
-    if (guard !== null && !guardConfirmed) { e.preventDefault(); emit("window:close-requested"); }
+    if (guard !== null && !guardConfirmed && !rendererStuck) {
+      e.preventDefault();
+      quitAfterConfirm = false;                    // this is a window close now, not the quit that was left unanswered
+      emit("window:close-requested");
+    }
   });
   w.on("closed", () => {
     offSettings();
@@ -91,15 +103,19 @@ export function createWindow(opts: { canHideToTray: () => boolean; onClosed?: ()
     opts.onClosed?.();
   });
 
-  const dev = process.env.VITE_DEV_SERVER_URL;
-  if (dev) void w.loadURL(dev);
-  else void w.loadFile(join(__dirname, "../dist-renderer/index.html"));
+  // The built renderer is served from the app scheme (registerAppProtocol), never from file://.
+  void w.loadURL(process.env.VITE_DEV_SERVER_URL ?? appUrl());
   return w;
 }
 
+/** No unsaved work: forget the guard, the confirmation and any quit that was waiting on them. */
+function dropGuard(): void {
+  guard = null; guardConfirmed = false; quitAfterConfirm = false;
+}
+
 export function setCloseGuard(message: string | null): void {
-  guard = message;
-  if (message === null) guardConfirmed = false;
+  if (message === null) dropGuard();
+  else guard = message;
 }
 
 /** The renderer confirmed: close the window, or finish the quit that was waiting for it. */
@@ -113,7 +129,7 @@ export function confirmClose(): void {
 export function handleBeforeQuit(e: { preventDefault(): void }): void {
   if (quitting) return;
   const w = getWindow();
-  if (w && guard !== null && !guardConfirmed) {
+  if (w && guard !== null && !guardConfirmed && !rendererStuck) {
     e.preventDefault();
     quitAfterConfirm = true;
     showWindow();

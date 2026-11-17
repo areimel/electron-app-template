@@ -3,7 +3,7 @@
 // renderer plain data. The renderer never sends a URL: it sends a story id and main looks the URL up.
 import { supersededError } from "../../shared/superseded";
 import type { NewsFeed, NewsPage } from "../../shared/ipc/news";
-import { readJson, writeJson } from "../store/jsonStore";
+import { readJson, removeJson, writeJson } from "../store/jsonStore";
 import { fetchJson, NetError } from "./net";
 import { openExternalHttps } from "./links";
 import {
@@ -66,4 +66,11 @@ export function openStory(id: number, target: "article" | "comments"): void {
   if (!story) throw new Error("That story is not in the list any more. Refresh and try again.");
   const url = target === "article" && story.url ? story.url : commentsUrl(id);
   if (!openExternalHttps(url)) throw new Error("That link could not be opened.");
+}
+
+/** Data reset: drop the cached stories, and supersede a fetch in flight so it cannot write the file back. */
+export function clearNewsCache(): void {
+  latest++;
+  cache = null;
+  removeJson(CACHE_FILE);
 }

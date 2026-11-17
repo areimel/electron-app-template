@@ -4,7 +4,6 @@ import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { brand } from "./shared/brand";
 
-const csp = `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src ${brand.mediaScheme}: blob:`;
 const pkg = JSON.parse(readFileSync(resolve(import.meta.dirname, "package.json"), "utf8")) as { version: string; author: string };
 
 export default defineConfig({
@@ -16,12 +15,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    {
-      name: "app-csp",
-      apply: "build",
-      transformIndexHtml: (html) =>
-        html.replace("<head>", `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />`),
-    },
+    // The Content-Security-Policy is a response header set by the main process (shared/csp.ts), not a <meta> tag.
     {
       name: "app-title",
       transformIndexHtml: (html) => html.replace(/<title>.*?<\/title>/, `<title>${brand.name}</title>`),

@@ -1,19 +1,18 @@
-import { dialog, type FileFilter } from "electron";
+import { app, dialog, type FileFilter } from "electron";
 import { randomBytes } from "node:crypto";
-import { readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, isAbsolute } from "node:path";
+import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { basename, isAbsolute, join } from "node:path";
 import type { OpenedFile } from "../../shared/ipc/editor";
 import { getWindow } from "../window";
 import { deliverDeepLink } from "./deepLink";
-import { EDITOR_MAX_BYTES, HandleTable, decodeText, displayFolder, isTextFileName } from "./filesCore";
+import { homeDir } from "./home";
+import { EDITOR_MAX_BYTES, HandleTable, decodeText, displayFolder, isTextFileName, safeFileName } from "./filesCore";
 import { log } from "./logger";
 import { addRecent } from "./recents";
 
 // The only place that turns a path into a handle: the renderer holds random ids, never paths.
 const handles = new HandleTable(200, () => randomBytes(8).toString("hex"));
 let pending: string | null = null;
-
-const home = (): string => process.env.HOME ?? process.env.USERPROFILE ?? "";
 
 export async function pickOpenFile(o: { title: string; filters: FileFilter[] }): Promise<string | null> {
   const parent = getWindow();
@@ -22,11 +21,24 @@ export async function pickOpenFile(o: { title: string; filters: FileFilter[] }):
   return r.canceled ? null : (r.filePaths[0] ?? null);
 }
 
+/** `defaultName` may come from the renderer: only its file name is used, in a folder main chooses (Documents). */
 export async function pickSaveFile(o: { title: string; defaultName: string; filters: FileFilter[] }): Promise<string | null> {
   const parent = getWindow();
-  const opts = { title: o.title, defaultPath: o.defaultName, filters: o.filters };
+  const opts = { title: o.title, defaultPath: join(app.getPath("documents"), safeFileName(o.defaultName)), filters: o.filters };
   const r = parent ? await dialog.showSaveDialog(parent, opts) : await dialog.showSaveDialog(opts);
   return r.canceled || !r.filePath ? null : r.filePath;
+}
+
+/** For a path the save dialog did not confirm itself (main added an extension): asks before replacing a file. */
+export async function confirmReplace(path: string): Promise<boolean> {
+  if (!existsSync(path)) return true;
+  const parent = getWindow();
+  const opts = {
+    type: "warning" as const, buttons: ["Replace", "Cancel"], defaultId: 1, cancelId: 1,
+    message: `${basename(path)} already exists. Do you want to replace it?`,
+  };
+  const r = parent ? await dialog.showMessageBox(parent, opts) : await dialog.showMessageBox(opts);
+  return r.response === 0;
 }
 
 /** Throws "Too large" or "Not a text file". The size is checked before the file is read. */
@@ -62,7 +74,7 @@ export function openTextFile(path: string): OpenedFile {
   if (!isTextFileName(name)) throw new Error("Not a text file");
   const text = readTextFile(path, EDITOR_MAX_BYTES);
   addRecent(path);
-  return { fileId: fileHandle(path), name, folder: displayFolder(path, home()), text };
+  return { fileId: fileHandle(path), name, folder: displayFolder(path, homeDir()), text };
 }
 
 /** A file named on the command line (launch, second instance, macOS open-file): held for the Editor and announced. */

@@ -1,11 +1,13 @@
-import { app } from "electron";
+import { app, protocol } from "electron";
 import { brand } from "../shared/brand";
 import { setupDevCapture } from "./devCapture";
 import { deliverDeepLink, markRendererGone, registerDeepLinks } from "./features/deepLink";
 import { argvTargets } from "./features/deepLinkParse";
 import { queueLaunchFile } from "./features/files";
 import { log } from "./features/logger";
-import { registerMediaProtocol, registerMediaScheme, clearServed } from "./features/media";
+import { APP_SCHEME_ENTRY, applyDevCsp, registerAppProtocol } from "./features/appProtocol";
+import { registerMediaProtocol, MEDIA_SCHEME_ENTRY, clearServed } from "./features/media";
+import { shutdownTimer } from "./features/timer";
 import { setPreventSleep } from "./features/powerSave";
 import { createTray, hasTray } from "./features/tray";
 import { registerIpc } from "./ipc/index";
@@ -16,6 +18,7 @@ import { createWindow, getWindow, handleBeforeQuit, lockDownContents, lockDownSe
 function shutdown(): void {
   setPreventSleep(false);
   clearServed();
+  shutdownTimer();
 }
 
 function openMainWindow(): void {
@@ -30,7 +33,7 @@ function routeArgv(argv: readonly string[], cwd: string): void {
 }
 
 if (process.platform === "win32") app.setAppUserModelId(brand.appId);
-registerMediaScheme(); // privileged schemes must be registered before ready
+protocol.registerSchemesAsPrivileged([APP_SCHEME_ENTRY, MEDIA_SCHEME_ENTRY]); // privileged schemes: once, before ready
 
 process.on("uncaughtException", (e) => log.error("main", "Uncaught exception", e));
 process.on("unhandledRejection", (e) => log.error("main", "Unhandled rejection", e));
@@ -57,6 +60,8 @@ if (!app.requestSingleInstanceLock()) {
     log.info("main", `Starting ${brand.name} ${app.getVersion()} (${process.platform}, electron ${process.versions.electron})`);
     lockDownSession();
     registerMediaProtocol();
+    const dev = process.env.VITE_DEV_SERVER_URL;
+    if (dev) applyDevCsp(dev); else registerAppProtocol();
     registerIpc();
     openMainWindow();
     applySettingsToNative();

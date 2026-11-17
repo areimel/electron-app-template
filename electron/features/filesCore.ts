@@ -20,6 +20,16 @@ export function decodeText(buf: Uint8Array, maxBytes: number): string {
   }
 }
 
+/**
+ * A file name that is safe to hand a save dialog: the last path segment only, no control or reserved
+ * characters, no leading/trailing dots or spaces, at most 120 characters. Falls back to `fallback`.
+ */
+export function safeFileName(raw: string, fallback = "Untitled.md"): string {
+  const last = raw.split(/[\\/]/).pop() ?? "";
+  const cleaned = last.replace(/[\u0000-\u001f\u007f<>:"|?*]/g, "_").replace(/^[.\s]+|[.\s]+$/g, "").slice(0, 120).trim();
+  return cleaned === "" ? fallback : cleaned;
+}
+
 export const FOLDER_DISPLAY_MAX = 40;
 
 /**

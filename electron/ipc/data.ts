@@ -8,9 +8,11 @@ import { IpcArgError, v } from "./validate";
 /** The one place the per-collection field type is widened: main treats records as opaque beyond heal(). */
 const store = (name: CollectionName): Collection<unknown> => collection(name) as Collection<unknown>;
 
+const names = Object.keys(COLLECTIONS) as CollectionName[];
+
 export function register(): void {
   // The renderer's list changes only when this push arrives.
-  for (const name of Object.keys(COLLECTIONS) as CollectionName[]) {
+  for (const name of names) {
     store(name).onChange((items) => emit("data:changed", { name, items: items as AnyRecord[] }));
   }
 
@@ -26,7 +28,8 @@ export function register(): void {
   handle("data:export", v.none, () => exportData());
   handle("data:import", v.none, async () => {
     const r = await importData();
-    return { imported: r.imported, counts: { notes: 0, tasks: 0, snippets: 0, ...r.counts } };
+    const counts = Object.fromEntries(names.map((n) => [n, r.counts[n] ?? 0])) as Record<CollectionName, number>;
+    return { imported: r.imported, counts };
   });
   handle("data:reset", v.none, () => resetData());
   handle("data:show-folder", v.none, async () => { await shell.openPath(app.getPath("userData")); });

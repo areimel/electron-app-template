@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HandleTable, decodeText, displayFolder, elideMiddle, isTextFileName } from "../../electron/features/filesCore";
+import { HandleTable, decodeText, displayFolder, elideMiddle, isTextFileName, safeFileName } from "../../electron/features/filesCore";
 
 const bytes = (s: string): Uint8Array => new TextEncoder().encode(s);
 
@@ -90,5 +90,20 @@ describe("HandleTable", () => {
     const a = t.handle("/a"); t.handle("/b"); t.handle("/c");
     expect(t.pathOf(a)).toBeNull();
     expect(t.handle("/a")).not.toBe(a);
+  });
+});
+
+describe("safeFileName", () => {
+  it("keeps the last segment only and strips what a file system or dialog would misread", () => {
+    expect(safeFileName("notes.md")).toBe("notes.md");
+    expect(safeFileName("../../etc/passwd")).toBe("passwd");
+    expect(safeFileName("C:\\Users\\a\\b.txt")).toBe("b.txt");
+    expect(safeFileName('a<b>:"|?*.md')).toBe("a_b______.md");
+    expect(safeFileName("x\u0000\n.md")).toBe("x__.md");
+  });
+  it("falls back for empty, dot-only and over-long names", () => {
+    for (const n of ["", "  ", "..", "/", "a/"]) expect(safeFileName(n)).toBe("Untitled.md");
+    expect(safeFileName("x".repeat(500))).toHaveLength(120);
+    expect(safeFileName("", "fallback.txt")).toBe("fallback.txt");
   });
 });

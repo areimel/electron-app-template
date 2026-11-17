@@ -12,6 +12,12 @@ describe("v checks", () => {
     expect(() => v.string({ pattern: /^a+$/ })("b", at)).toThrow(IpcArgError);
     expect(v.string({ max: 3 })("abc", at)).toBe("abc");
   });
+  it("line: replaces line breaks and control characters so a log line cannot be forged", () => {
+    expect(v.line()("a\r\n2026-01-01 ERROR [main] forged\u0000\u001b[31m\u2028x", at)).toBe("a  2026-01-01 ERROR [main] forged  [31m x");
+    expect(v.line({ max: 3 })("abc", at)).toBe("abc");
+    expect(() => v.line({ max: 3 })("abcd", at)).toThrow(IpcArgError);
+    expect(() => v.line()(4, at)).toThrow(IpcArgError);
+  });
   it("int: integers in range only", () => {
     expect(v.int(1, 5)(3, at)).toBe(3);
     for (const x of [0, 6, 1.5, NaN, Infinity, "3", null]) expect(() => v.int(1, 5)(x, at)).toThrow(IpcArgError);

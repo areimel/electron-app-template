@@ -15,11 +15,10 @@ import { parseRange } from "./mediaRange";
  */
 let served: { token: string; real: string } | null = null;
 
-export function registerMediaScheme(): void {   // before app ready
-  protocol.registerSchemesAsPrivileged([
-    { scheme: brand.mediaScheme, privileges: { standard: true, secure: true, stream: true } },
-  ]);
-}
+/** Registered with the other schemes in main.ts, before app ready. */
+export const MEDIA_SCHEME_ENTRY: Electron.CustomScheme = {
+  scheme: brand.mediaScheme, privileges: { standard: true, secure: true, stream: true },
+};
 
 /** Checks `path`, makes it the only servable file (replacing the previous one) and returns its URL. */
 export function serveOnly(path: string): MediaFile {

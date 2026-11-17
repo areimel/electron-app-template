@@ -6,6 +6,7 @@ import {
   type CommandSpec, type MenuContext,
 } from "../shared/commands";
 import { brand, type LinkKey } from "../shared/brand";
+import { IpcArgError } from "./ipc/validate";
 
 export const MAX_APPS = 20;
 export const MAX_APP_COMMANDS = 30;
@@ -39,8 +40,8 @@ function command(raw: unknown): CommandSpec | null {
  * Validates the renderer's menu:set-context. Malformed structure throws; individual bad items are dropped
  * and counts are capped, so a confused renderer can shrink the menu but never put odd text or keys into it.
  */
-export function sanitizeMenuContext(raw: unknown): MenuContext {
-  if (!isRecord(raw) || !Array.isArray(raw.apps)) throw new Error("Invalid menu context");
+export function sanitizeMenuContext(raw: unknown, at = "#1"): MenuContext {
+  if (!isRecord(raw) || !Array.isArray(raw.apps)) throw new IpcArgError(at, "a menu context");
   const apps: MenuContext["apps"] = [];
   for (const a of raw.apps.slice(0, MAX_APPS)) {
     if (!isRecord(a) || typeof a.id !== "string" || !APP_ID.test(a.id)) continue;
@@ -49,7 +50,7 @@ export function sanitizeMenuContext(raw: unknown): MenuContext {
   }
   let app: MenuContext["app"] = null;
   if (raw.app !== null && raw.app !== undefined) {
-    if (!isRecord(raw.app) || !Array.isArray(raw.app.commands)) throw new Error("Invalid menu context");
+    if (!isRecord(raw.app) || !Array.isArray(raw.app.commands)) throw new IpcArgError(at, "a menu context");
     const name = label(raw.app.name);
     if (name) {
       const commands = raw.app.commands.slice(0, MAX_APP_COMMANDS).map(command).filter((c): c is CommandSpec => c !== null);

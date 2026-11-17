@@ -1,4 +1,3 @@
-import { app } from "electron";
 import { emit } from "../ipc/handle";
 import { formatClock, remainingMs, type TimerState } from "../../shared/ipc/timer";
 import { showWindow } from "../window";
@@ -44,7 +43,8 @@ function stopTimerTimers(): void {
   finishTimeout = trayInterval = null;
 }
 
-/** Timers are cleared on quit so nothing fires into a closing app. */
-export function registerTimerLifecycle(): void {
-  app.on("before-quit", () => { stopTimerTimers(); setTrayStatus(null); });
+/** Called from the real shutdown path only (not "before-quit", which an unsaved-changes guard can cancel). */
+export function shutdownTimer(): void {
+  stopTimerTimers();
+  setTrayStatus(null);
 }

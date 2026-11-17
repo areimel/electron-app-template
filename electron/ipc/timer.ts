@@ -1,5 +1,5 @@
 import { MAX_LABEL, MAX_MINUTES, MIN_MINUTES } from "../../shared/ipc/timer";
-import { dispatchTimer, getTimer, registerTimerLifecycle } from "../features/timer";
+import { dispatchTimer, getTimer } from "../features/timer";
 import { handle } from "./handle";
 import { v } from "./validate";
 
@@ -12,5 +12,4 @@ export function register(): void {
   handle("timer:pause", v.none, () => dispatchTimer({ type: "pause" }));
   handle("timer:resume", v.none, () => dispatchTimer({ type: "resume" }));
   handle("timer:reset", v.none, () => dispatchTimer({ type: "reset" }));
-  registerTimerLifecycle();
 }

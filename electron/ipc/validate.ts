@@ -16,6 +16,8 @@ export const v: {
   none: (a: unknown[]) => [];
   args<T extends unknown[]>(...checks: { [K in keyof T]: Check<T[K]> }): (a: unknown[]) => T;
   string(o?: { min?: number; max?: number; pattern?: RegExp }): Check<string>;  // default max 10_000
+  /** A string as above, with every line break and control character replaced by a space: safe to put in a one-line log. */
+  line(o?: { max?: number }): Check<string>;
   int(min: number, max: number): Check<number>;
   bool: Check<boolean>;
   oneOf<T extends string>(values: readonly T[]): Check<T>;
@@ -41,6 +43,10 @@ export const v: {
     if (x.length < min || x.length > max) return bad(at, `a string of ${min} to ${max} characters`);
     if (pattern && !pattern.test(x)) return bad(at, "a string in the expected format");
     return x;
+  },
+  line: (o = {}) => (x, at) => {
+    const text = v.string({ max: o.max })(x, at);
+    return text.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, " ");
   },
   int: (min, max) => (x, at) => {
     if (typeof x !== "number" || !Number.isInteger(x) || x < min || x > max) return bad(at, `an integer from ${min} to ${max}`);
