@@ -1,231 +1,220 @@
-# Shader Video Player
+# App Template
 
-Desktop video player (Electron) that draws the video through multi-pass WebGL2 shader effects. Two effects: CRT television (`crt/`, first in the registry) and VHS tape (`vhs/`), both built on `effects/shared/`. With no file open, the home screen (video library, TV preset picker, latest updates) is painted on a 2D canvas and drawn through the same effects. Personal daily-use player, Linux/Wayland first. The repo also holds `website/`, a separate Astro product site (see [Website](#website)).
+Starter for desktop apps (Electron 45, React 19, TypeScript strict, Vite 8, esbuild for the main process, vitest, pnpm 11). It opens on a "sheet index" (the home menu) that links to eight small demo apps, each teaching one desktop skill: Notes, Tasks, Editor, Clipboard, Timer, System info, News, Player. Around them is shared plumbing: three themes (Blueprint, Graphite, Kraft) in light and dark plus an accent override, typed IPC, a generic JSON collection store, a native menu generated from one command table, a tray, notifications, a command palette and a Settings sheet. The owner clones it to start new apps and to learn desktop development, so the code stays small and readable, and a demo is cut out by deleting its folder (see `docs/guides/remove-a-demo.md`). `website/` is a separate Astro product-site template (see [Website](#website)).
 
-Design specs in `docs/superpowers/specs/`: `2026-11-15-shader-video-player-design.md` (read before changing the shader layer), `2026-11-15-vhs-effect-design.md`, `2026-11-16-home-screen-design.md`.
+Terms: the **main process** is the Node side (`electron/`), which can touch files, the network and the OS. The **renderer** is the web page (`renderer/`), sandboxed and treated as untrusted. The **preload** script (`electron/preload.ts`) is the only bridge between them and exposes `window.app`. **IPC** is the message passing across that bridge.
+
+Design: `docs/superpowers/specs/2026-11-17-app-template-design.md` (intent, decisions, non-goals). `docs/superpowers/plans/2026-11-17-foundation-contracts.md` is the build plan; its section 6 "As built" overrides the earlier sections, and the code overrides both. Task guides: `docs/guides/`.
 
 ## Commands
 
 ```bash
-pnpm dev            # vite + esbuild watch + Electron
-pnpm typecheck      # renderer/tests and electron tsconfigs
-pnpm test           # vitest (pure logic only, no GL)
-pnpm check:shaders  # compiles every effect pass on the real GPU in a hidden Electron window
-pnpm build          # typecheck + renderer bundle + main bundle
-pnpm dist           # .deb in release/ (launcher icons: build/icons/<N>x<N>.png, hicolor sizes up to 512)
+pnpm dev            # vite (port 5173, strict; APP_DEV_PORT=5199 pnpm dev for another) + esbuild watch + Electron
+pnpm typecheck      # renderer/shared/tests tsconfig, then the electron tsconfig
+pnpm test           # vitest (pure logic only; no Electron, no DOM)
+pnpm build          # typecheck + renderer bundle (dist-renderer) + main bundle (dist-electron)
+pnpm dist           # build + .deb in release/ (Linux x64)
+pnpm dist:win       # build + NSIS installer (configured, never run; build it on Windows)
+pnpm dist:mac       # build + dmg (configured, never run; build it on macOS)
+node scripts/make-icons.mjs   # regenerate the placeholder icons (needs ImageMagick `convert`)
 ```
 
-Run `pnpm typecheck && pnpm test && pnpm check:shaders` before every commit, and check the exit status itself: piping a gate through `tail`/`grep` hides a failure. CI (`.github/workflows/ci.yml`) runs only `typecheck` and `test` (no GPU), so `check:shaders` is the local gate's job.
+Run `pnpm typecheck && pnpm test` before every commit and check the exit status itself: piping a gate through `tail` or `grep` hides a failure. CI (`.github/workflows/ci.yml`) runs the same two on pushes to `main` and on pull requests. There is no lint or format script; follow the surrounding style (two spaces, double quotes, semicolons).
 
-Website (its own checks; the root gates never see it: root `tsconfig.json` includes only `renderer`/`shared`/`tests`, vitest only `tests/**/*.test.ts`):
+Website (its own checks; the root gates never see it, because the root `tsconfig.json` includes only `renderer`, `shared` and `tests`, and vitest only `tests/**/*.test.ts`):
 
 ```bash
-pnpm --dir website dev --background   # http://localhost:4321/shader-video-player/; dev status|logs|stop
+pnpm --dir website install --frozen-lockfile
+pnpm --dir website dev --background   # http://localhost:4321/electron-app-template/ ; dev status|logs|stop
 pnpm --dir website check              # astro check
 pnpm --dir website build              # website/dist
-pnpm --dir website test:browser       # Playwright, two builds (mocked key, no key), own preview on :4321
+pnpm --dir website test:browser       # Playwright, two builds; own preview on :4321, or PREVIEW_PORT=4410
 ```
 
-Stack: Electron 45, React 19, TypeScript 7 (strict), Vite 8, esbuild for the main process, vitest, pnpm 11. Build-script approval for dependencies lives in `pnpm-workspace.yaml` (`allowBuilds`).
+Build-script approval for dependencies lives in `pnpm-workspace.yaml` (`allowBuilds`).
 
 ## Layout
 
 ```
-electron/                 main process
-  main.ts window.ts menu.ts links.ts gpuFlags.ts powerSave.ts   links.ts: fixed Help menu URLs + About panel
-  recents.ts recentsShape.ts jsonStore.ts  recents and the validated userData JSON store (readJson/writeJson)
-  ipc.ts subtitleIpc.ts preload.ts     IPC surface
-  protocol.ts allowlist.ts             svp-media:// (file + stream), the one servable file
-  playback.ts selection.ts queue.ts    open/restart with a generation counter; queue allow-set;
-                                       selection.ts: openSelection, openSelectionAt (library opens)
-  library/                             home screen library: service (folders, index, scans), walker
-                                       (caps, symlink rules), shape (heals library.json and the metadata cache),
-                                       folders (nesting rules), ids, metaParse, metaQueue (light ffprobe),
-                                       watcher (fs.watch + debounce), state, libraryIpc, queueWindow
-  devCapture.ts                        screenshot harness (dev only)
-  screenshot.ts pngName.ts             save-PNG dialog and IPC; validates the PNG and file name
-  media/                               probe, formats, ffmpegArgs, session (transcode),
-                                       subtitles, externalSubtitles, processes, binaries
-shared/                   types.ts (PlayerBridge IPC contract, library types), subtitleFiles.ts, superseded.ts
-  commands.ts             every command: id, label, group, keys, accelerator (single source)
+electron/                 main process (Node)
+  main.ts window.ts menu.ts menuTemplate.ts   startup and lifecycle; window + close guard; native menu
+                                              (menuTemplate.ts is pure: template and context checks)
+  preload.ts              the bridge: window.app.{invoke,drop,on,platform,initialTheme}
+  devCapture.ts           screenshot harness (not in packaged builds)
+  ipc/                    handle.ts (handle, handleDrop, emit), validate.ts (v.* argument checks),
+                          one register file per part: app data settings editor clipboard timer system news player; index.ts
+  store/                  jsonStore.ts (atomic JSON files in userData), collection.ts + collectionCore.ts (generic CRUD),
+                          settings.ts, windowState.ts + windowStateShape.ts, bundle.ts + dataTransfer.ts (export/import/reset)
+  features/               appProtocol.ts + appServe.ts (serve the built page), media.ts + mediaRange.ts (Player's file scheme),
+                          net.ts + netCore.ts (allowlisted fetch), news.ts + newsModel.ts, timer.ts + timerModel.ts,
+                          systemInfo.ts + systemModel.ts, files.ts + filesCore.ts (dialogs, handles), recents.ts + recentsShape.ts,
+                          deepLink.ts + deepLinkParse.ts, tray.ts, notifications.ts, logger.ts, links.ts, powerSave.ts, assets.ts, home.ts
+shared/                   code both sides import; never imports electron or React
+  brand.ts                name, ids, links, default theme: the one rebrand file
+  ipc/                    define.ts (invoke/drop/event), one channel file per part, index.ts (IPC map + types), bridge.ts (window.app type)
+  collections/            base.ts, heal.ts, notes.ts tasks.ts snippets.ts, index.ts (COLLECTIONS)
+  commands.ts             shell commands, key/accelerator helpers (formatKey, toAccelerator, hint), MenuContext
+  settings.ts theme.ts csp.ts mediaTypes.ts superseded.ts
 renderer/
-  App.tsx                 thin composition; keep it that way
-  components/             Controls, VideoView, ShaderCanvas, SubtitleOverlay, QueuePanel, ...
-  components/common/      Button, Panel (+PanelHeader), Kbd, Segmented, Switch, Slider, Dropdown,
-                          IconButton, Icon, Toast
-  components/effects/     EffectsPanel, PresetPicker, ParamGroup, ParamControl
-  components/home/        HomeScreen (2D canvas + pointer), HomeMirror (visually hidden text for
-                          assistive tech and tests), painter.ts (draws a home frame on the canvas)
-  styles/tokens.css       colour (incl. the --tv-* home palette), type, spacing, radius, layer and focus tokens
-  styles/home.css         home screen canvas and its source placement
-  hooks/                  usePlaybackSource, usePlayQueue, usePlayerState, usePlayerShortcuts,
-                          useAppCommands (command id → handler), useDismiss, useScreenshot,
-                          useSubtitles, useEffectSettings, useEffectChain, useHomeMenu (rows,
-                          cursor, actions), useHomePaint (layout → canvas), useLibrary, ...
-  utils/                  queue (reducer), effectSettings (reducer), effectStorage, cueText, step,
-                          changelog, credits (bundled CHANGELOG.md and THIRD_PARTY_NOTICES.md headings), dropItems
-  utils/home/             types (the 40x30-cell contract), model, libraryRows, layout, layoutRows,
-                          state (reducer, keyToAction), hit, pointer, text, frame, effectValues (homeValues)
-  shader/gl/              context, program, shaderError, target, quad, includes, commonChunks,
-                          passTypes, passPlan (pure), passGraph, videoSource, renderPolicy (pure),
-                          frameInput (the FrameInput contract), videoInput (<video>), canvasInput (2D canvas),
-                          inputClock (pure), effectRenderer
-  shader/glsl/common/     color, yiq, noise, gaussian, sampling, blur, resample, subcarrier,
-                          composite-encode, composite-decode  (#include "name"; pure, no p_/d_ names)
-  shader/effects/         types.ts, params.ts (generic helpers), registry.ts
-  shader/effects/shared/  signal.ts (NTSC timing: subcarrier and cutoff cycles per sample),
-                          chunks.ts (glob -> chunk map), tube/ (the CRT tube as a reusable display stage:
-                          params, derive, pipeline (tubePasses), chunks, geometry.ts (pointer mapping through
-                          the glass), glsl/{beam,geometry,mask,post,display},
-                          passes/{linearize,glow-h,glow-v,diffuse-down,diffuse-up}.frag)
-  shader/effects/crt/     params, presets, derive, pipeline, index, pointer, passes/{raster,signal-encode,signal-decode,main}.frag
-  shader/effects/vhs/     params, presets, derive, pipeline, index, pointer, passes/{frame,tape-h,tape-v,signal-encode,signal-decode,main}.frag,
-                          glsl/{timebase,tape-noise,dropout,osd,osd-font}.glsl
-tests/                    vitest; tests/shaders/compile-entry.ts is the check:shaders entry
-scripts/                  dev.mjs, build-electron.mjs, check-shaders.mjs (+ -main.cjs)
-CHANGELOG.md              release notes, bundled into the home screen (`?raw`, parsed by utils/changelog.ts)
-AGENTS.md                 short contributor guide; TODO.md: publishing tasks and wish list
+  main.tsx index.html App.tsx   entry: fonts, theme CSS, initial theme, <AppShell/>
+  shell/                  AppShell, Home (sheet index), Rail, TitleBar, TitleBlock, CommandPalette, ShortcutHelp, ErrorBoundary,
+                          ShellContext (hooks apps use), router.ts, handlerRegistry.ts, commandTable.ts, paletteFilter.ts,
+                          useShellNav/useShellCommands/useShellEvents/useConfirm, shellModel.ts (pure), ipcSafe.ts
+  apps/                   registry.ts (the list of demos), types.ts (AppDefinition), one folder per demo:
+                          notes tasks editor clipboard timer system news player
+  settings/               SettingsScreen + Appearance, ThemePicker, Data, About sections
+  theme/                  tokens.css, themes/{blueprint,graphite,kraft}.css, index.css, useTheme.ts, color.ts (contrast maths)
+  components/common/      Button Dialog Dropdown EmptyState Field Icon IconButton Kbd List Panel Segmented Slider Spinner
+                          SplitPane Switch TextArea TextField Toast Toolbar
+  hooks/                  useCollection useSettings useAppEvent useShortcuts useDismiss useFullscreen useLatest
+  utils/                  changelog.ts and credits.ts (parse the bundled CHANGELOG.md and THIRD_PARTY_NOTICES.md), format, step, platform, errorMessage
+  styles/                 base, controls, fields, overlays, layout, slider (all token-based)
+tests/                    vitest; tests/apps/ for demo logic, tests/main/ and tests/store/ for main-side pure code
+scripts/                  dev.mjs, build-electron.mjs, make-icons.mjs
+build/                    icon.png, icons/<N>x<N>.png, tray.png (placeholders)
+docs/guides/              task guides; docs/superpowers/: spec and plan
+CHANGELOG.md THIRD_PARTY_NOTICES.md   both bundled into the app and parsed for Settings > About (formats below)
+AGENTS.md TODO.md         short contributor guide; what is left to do
+website/                  Astro 7 site template, own package.json and lockfile (config in src/config/)
 .github/workflows/        ci.yml (typecheck + test), website-pages.yml (manual Pages deploy)
-website/                  Astro 7 static site (CRT-TV), own package.json, pnpm-workspace.yaml, lockfile
-  src/pages/              index, download, docs, contact, 404
-  src/components/         Header, Footer, TvFrame, SectionHeading, CommandBlock, SignupSection, ContactForm
-  src/layouts/            SiteLayout (head, canonical/social meta)
-  src/lib/                site.ts (name, repo/releases/issues, author, install command, url(), absoluteUrl(), navigation), features.ts
-  public/install.sh       curl | bash installer: newest release .deb, SHA256SUMS check, apt install
-  src/scripts/forms.ts    Web3Forms submit and status states (the consent checkbox is in ContactForm)
-  src/styles/             global.css (tokens, type, spacing, @fontsource imports), home.css
-  src/content/guide.md    starter manual rendered on /docs
-  public/images/          app screenshots (webp) + README.md (provenance)
-  tests/site.spec.ts      Playwright; scripts/test-browser.mjs drives the two-build run
 ```
 
 ## How it fits together
 
-- **Playback:** ffprobe every file. Native when Chromium can decode it; otherwise ffmpeg remuxes or transcodes live into a growing fragmented MP4 served at `svp-media://stream/<id>`. Seeking or switching audio in that mode restarts ffmpeg (`restartStream`).
-- **Effect on:** the `<video>` stays in the DOM but hidden (`.video-hidden`, never `display:none`). `videoInput` wraps it as a `FrameInput`; `VideoSource` uploads frames from that input (on `requestVideoFrameCallback` for a video), `PassGraph` runs the effect's passes, the last pass draws to the canvas. `EffectRenderer` renders only when a frame, parameter or size changed, or while an `animated` parameter is non-zero during playback.
-- **Effect off:** the plain `<video>` is shown, the canvas is unmounted and its WebGL context released.
-- **Home screen:** shown whenever no plan is open (`App.tsx`). `useHomeMenu` holds the model (rows from `utils/home/model.ts`, library rows from `libraryRows.ts`) and the cursor; `layout()` is pure and turns state into a draw list in logical units (320×240, 40×30 cells of 8 px, 2-cell inset). `useHomePaint` paints it with `painter.ts` onto the 640×480 2D canvas, which is the effect's input through `canvasInput` (`FrameInput`). The effect draws it; the 2D canvas itself is kept 1 px and invisible as the source.
-- **Home, effect off:** the 2D canvas is shown directly, pixelated, with no GL context. Paints still run: a minute timer for the clock, and one timeout set for the next marquee step or updates page turn (`layout()` reports it as `nextChange`), only while the window is visible and focused (`useHomePaint`, `utils/windowActivity.ts`).
-- **Home framing:** `homeValues()` (`utils/home/effectValues.ts`) overrides overscan to 0 and the fit to letterbox for the menu only. Everything else is `fx.values` verbatim, OSD presets included.
-- **Home TV preset:** the TV rows are the effects panel's setting. Picking one is `setEffect` + `applyPreset`; presets apply on Enter or click, never on focus (`choosePreset` would wipe custom edits). The Off row and an "EDITED" row exist. With the effect off, the preset that comes back is marked standby.
-- **Home pointer:** a point on the output goes back through the glass with the effect's `pointerToSource` (`viewUv → source uv`, then `uvToLogical` in `utils/home/pointer.ts`), and `hitTest` finds the row. With the effect off the flat canvas is mapped with `containUv`. Only a real pointer move moves the cursor (Chromium also sends moves when the content under a still pointer changes).
-- **Home keys:** widget keys on the focused home root (`keyToAction` in `utils/home/state.ts`): arrows, Tab, Page/Home/End, Enter/Space, Delete on a folder. They are not `COMMANDS`. `e` and `f` still work there. `l` and `?` are reserved.
-- **Library:** registered folders live in `userData/library.json` (`{version, folders: [{id, path}]}`, healed by `shape.ts`). The walker is async and generation-checked after each await: depth 8, 5000 items per folder, 32 folders, dot entries skipped, symlinked directories never followed, a symlinked file kept only if it resolves inside the root. Nested or duplicate folders are refused (`folderConflict`).
-- **Library metadata:** a light ffprobe (duration, size) per file, cached in `library-meta.json` and checked against size and mtime. Concurrency 2, 15 s timeout. Probing pauses while a video is open and is killed on quit; the cache is saved when the queue drains (at most every 30 s while it runs).
-- **Library freshness:** a recursive `fs.watch` per folder, debounced 1.5 s. On a watcher error (or no watcher) the folder is rescanned on window focus and on `library:get`, at most every 5 s.
-- **Library open:** `library:open(itemId)` queues the item's directory siblings (same subfolder, name order, windowed to `MAX_QUEUE` around the item) through `openSelectionAt`, so generation, allow-set and serving rules apply.
-- **CRT pipeline:** `raster → signalEncode → signalDecode → linearize (feedback) → glowH → glowV → diffuseDown → diffuseUp → main` (`linearize…diffuseUp` come from `tubePasses` in `shared/tube/pipeline.ts`; `main.frag` just calls `tubeDisplay` from `shared/tube/glsl/display.glsl`). Everything before `main` is in tube space at raster resolution.
-- **VHS pipeline:** `frame → tapeH → tapeV → signalEncode → signalDecode → linearize → glowH → glowV → diffuseDown → diffuseUp → main`. The signal pair runs only when `connection` is Composite; the tube passes only when `tv` is on (glow needs `glow > 0`, diffusion needs `halation` or `diffusion > 0`). A disabled pass forwards its first input. `main.frag` draws flat with the TV off and calls the tube display with it on. The tape passes run on the tape raster (`d_tapeWidth` × `d_tapeLines`).
-- **Settings:** `localStorage` keys `svp.effect.active` and `svp.effect.<id>`; loaded through `resolveValues`, so stale or out-of-range values heal. First run (nothing stored): the first registered effect (CRT, the fallback in `effectSettings.ts`) with its first preset selected, and the effect is on. An existing saved state is kept; a stored `active: null` stays off.
-- **Subtitles** are always drawn by `SubtitleOverlay` (track kept in `hidden` mode) so they look the same with the effect on or off.
+- **Page origin and CSP.** The packaged page is never loaded from `file://`. `electron/features/appProtocol.ts` registers a privileged scheme `app-template-app://renderer/` (`brand.scheme` + `-app`, `shared/csp.ts`) and `appServe.ts` answers it from `dist-renderer`, confined to that folder (realpath check, GET and HEAD only, `nosniff`). The one Content-Security-Policy (CSP, the browser rule for what a page may load) is built by `buildCsp()` and sent as a response header on HTML: everything from `'self'`, `connect-src 'none'` (the page cannot use the network), `media-src` the media scheme plus `blob:`, fonts from `'self'` only, no `data:` fonts. In dev (`VITE_DEV_SERVER_URL` set by `scripts/dev.mjs`) the page comes from Vite on `http://localhost:5173` and `applyDevCsp` adds the dev variant of the same policy (allows the HMR websocket and an inline script). Custom schemes are registered with `protocol.registerSchemesAsPrivileged` once, before app ready (`main.ts`).
+- **Window.** `window.ts`: `contextIsolation`, `sandbox`, no `nodeIntegration`; shown on `ready-to-show` with the theme's background colour (no flash); size and position saved in `window-state.json` and fitted to the connected displays; `APP_WINDOW_BOUNDS=1280x800` (or `x,y,w,h`) overrides the saved bounds (the comment in `window.ts` says it is ignored when packaged, but the code does not check that). `lockDownSession` grants only the `fullscreen` permission; `lockDownContents` blocks navigation, new windows and webviews. A single-instance lock sends a second launch's arguments to the first window.
+- **Close guard.** An app calls `useNavigationGuard(message)` while it has unsaved work. That sets main's guard (`window:set-guard`); a window close or quit then emits `window:close-requested`, the shell asks with `ConfirmDialog`, and `window:confirm-close` lets it through. A crashed or hung page drops the guard so it cannot trap the app. With the setting `closeToTray` on (default off) and a tray that exists, closing hides the window instead.
+- **IPC.** Every channel is declared once in `shared/ipc/<part>.ts` as `"part:verb": invoke<[args], Result>()`, `drop<Result>()` (renderer passes `File`s) or `event<Payload>()` (main to renderer), and merged in `shared/ipc/index.ts` (`IPC`, plus the types `ArgsOf`, `ResultOf`, `PayloadOf`). The preload refuses any channel name or kind that is not in `IPC`. In main, `electron/ipc/<part>.ts` has a `register()` that calls `handle(channel, validator, fn)`, listed in `electron/ipc/index.ts`. `handle` accepts only the main window's top frame, validates every argument with `v.*` (`validate.ts`), logs, and rethrows as a plain `Error(message)`. `emit(channel, payload)` pushes to the page; the page listens with `useAppEvent`. Drops: the preload turns `File`s into paths (`webUtils.getPathForFile`), `handleDrop` rechecks them (at most 32, absolute, existing regular files). Channel names are `<part>:<verb-kebab>` (`tests/ipc.test.ts`); the `app` part also holds `menu:`, `window:`, `log:` and `links:`.
+- **Collections.** A collection is a list of records kept in `userData/<name>.json`. `shared/collections/<name>.ts` is a `CollectionSpec` (`name`, `version`, `max`, `heal`) listed in `COLLECTIONS`. Main's generic store (`store/collection.ts`) does list/create/update/remove/restore/reorder, assigns ids (16 hex) and timestamps, and pushes `data:changed`. The page uses `useCollection(name)`: the list changes only when that push arrives; mutations return promises. Records are addressed by id and every payload goes through the spec's `heal()`.
+- **Settings and themes.** `shared/settings.ts` (`theme`, `mode`, `accent`, `closeToTray`, `notifications`), `store/settings.ts` in main, `useSetting(key)` in the page, `settings:changed` push. `shared/theme.ts` lists `THEMES` and `WINDOW_BG`; each theme is one CSS file in `renderer/theme/themes/` with the 12 base tokens for light and dark. `useTheme` sets `data-theme` and `data-mode` on `<html>`; mode `system` follows the OS through `nativeTheme`. The accent override recomputes `--accent-ink` and `--accent-text` for contrast. Main passes the first theme to the preload as `--app-theme=<theme>:<mode>` so the first paint is right.
+- **Commands.** One table: `SHELL_COMMANDS` and `goCommands()` in `shared/commands.ts`, plus each app's `commands` in its `AppDefinition`. A command has `keys` (plain keys the page handles, shown in the menu as display-only) and/or `accelerator` (handled by the native menu, which sends `menu:command`). The same table drives the shortcut dispatcher (`useShortcuts`), the native menu (`menuTemplate.ts`; the page sends the active app's commands in `menu:set-context` and main validates them), tooltips (`hint()`), the palette and the `?` help. Handlers are registered with `useCommandHandlers` while an app is mounted; the palette lists only commands that have a handler. An accelerator-only command is reachable only through the menu or the palette.
+- **Shell and registry.** `renderer/apps/registry.ts` (`APPS`) is the only list of demos; array order is the sheet number, the `Ctrl/Cmd+1..9` order (first nine) and the Go menu. Each demo is lazy loaded behind an `ErrorBoundary`. `router.ts` is a reducer over `home | settings | app(appId, recordId)`; an unknown app id goes home. Apps reach the shell through `ShellContext` hooks: `useShell` (navigate, toast, confirm, hint), `useTitleInfo` (count and save state in the title block), `useCommandHandlers`, `useNavigationGuard`.
+- **Deep links.** `app-template://home`, `://settings`, `://open/<appId>[/<recordId>]` (`deepLinkParse.ts`, strict). A text file (`.md`, `.markdown`, `.txt`) on the command line is queued for the Editor. Links that arrive before the page says `app:ready` wait in a queue. `app.setAsDefaultProtocolClient` runs only when packaged.
+- **Demos.** Notes: a collection, search, 500 ms debounced autosave. Tasks: a collection, filters, reorder, undo from a toast. Editor: open/save dialogs, recents, drop, unsaved-changes guard, Markdown preview with `markdown-it` (HTML disabled); the page holds opaque file ids, never paths. Clipboard: read and write the system clipboard through main, snippets in a collection. Timer: the state lives in main (`features/timer.ts`) so it survives leaving the sheet; it drives the tray text and a notification, and the page redraws from `endsAt`. System info: main samples every second only while the page is subscribed and the window is visible. News: Hacker News fetched by main, cached in `news-cache.json`, offline is a state not an error. Player: plays one chosen local file, native formats only.
+- **Network through main.** `features/net.ts` `fetchJson` is the only way out: https, host in `NET_HOSTS` (`netCore.ts`), default port, no credentials, redirects refused, 2 MB cap, 10 s timeout, every failure a `NetError` with a fixed message. The page sends a story id, never a URL.
+- **Media protocol.** `features/media.ts` serves exactly one file at a time at `app-template-media://file/<random token>` with byte-range support; the realpath and extension (`shared/mediaTypes.ts`) are checked when it is chosen. `media-src` in the CSP names that scheme.
+- **Files.** Open and save dialogs run in main (`features/files.ts`). The page receives an opaque `fileId` and a display folder (`~/…/notes`), never an absolute path.
 
 ## Rules
 
-- **One source of truth per parameter.** An effect parameter is declared once in `effects/<effect>/params.ts` as a `ParamSpec` (the tube's parameters in `effects/shared/tube/params.ts`, spread into each effect that has a tube). Uniforms (`p_<id>`), the settings panel, presets, persistence and reset are all generated from that table. Never hand-write a slider or a uniform upload for a parameter. Select option order is part of the shader contract (see the index constants in `crt/params.ts` and `shared/tube/params.ts`).
-- **Derived values live in `derive.ts`** (pure, unit-tested) and reach shaders as `d_<name>`; the engine adds the `p_`/`d_` prefixes. Where a shader and `derive.ts` share an assumption, keep them in step and say so in a comment. Current pairs: mask transmittance (`shared/tube/glsl/mask.glsl` ↔ `maskTransmittance` in `shared/tube/derive.ts`), peak-1 beams with duty σ√(2π) (`shared/tube/glsl/beam.glsl` ↔ `exposureGain` in `shared/tube/derive.ts`), and `BEAM_SIGMA_MAX = 0.55` in `shared/tube/params.ts` (the three-line beam sum is only accurate up to that width).
-- **Pointer through the glass:** every effect implements `pointerToSource` (`EffectDefinition` in `effects/types.ts`; generic check in `tests/effects/definitions.test.ts`). The tube part is `shared/tube/glsl/geometry.glsl` ↔ `shared/tube/geometry.ts` (CURVE_BULGE, curveFactorMinusOne, tube placement; comments on both sides). Each effect's `pointer.ts` mirrors its own passes: `crt/pointer.ts` ↔ `raster.frag` (and `main.frag`), `vhs/pointer.ts` ↔ `frame.frag` (and `main.frag`, tv on or off). The shaders carry no back-reference, so change the pointer file with them. Time-varying displacement (VHS wobble, tracking, head switch) is not mapped.
-- **Engine input:** the engine draws from a `FrameInput` (`shader/gl/frameInput.ts`), never from a `<video>` directly: `videoInput` for the player, `canvasInput` for the home screen.
-- **Home colours:** the home screen's colours are the `--tv-*` tokens in `tokens.css`. `painter.ts` reads them with `getComputedStyle`; no hex anywhere else.
-- **Shader contract:** GLSL ES 3.00, `vUv` origin top-left, `out vec4 fragColor`, `#include "name"` for shared chunks, every uniform a float except samplers, `uFrame` (per render: noise seeds) and `uVideoFrame` (per presented video frame: dot crawl, bob). `uTime` is the media position in seconds in both playback modes (the stream start offset is added in `renderPolicy.mediaPosition`), so it can be large: wrap it before using it as a phase. A uniform used by several chunks is declared once. `gl_FragCoord` is bottom-left origin in every pass; only use it where origin does not matter (mask, noise, dither). Use `textureLod` wherever derivatives are undefined (after an early return, inside loops with `break`).
-- **Integer maths:** a pass that uses integer division or `%` (the OSD chunks do) declares `precision highp int;`. `mediump` int division crashed Mesa's AMD shader compiler and killed the GPU process.
-- **Float targets:** an effect that stores signed or >1 values sets `requiresFloat`; it then refuses to start on a GPU without float render targets instead of rendering garbage.
-- **Shader licensing:** this repo is MIT. Do not paste code from GPL/LGPL shaders (CRT-Royale, CRT-Guest-Advanced, CRT-Geom, Easymode, zfast, Themaister/NTSC-Adaptive, blargg, Patchy NTSC). Permissive sources may be adapted with a credit in the file and in `THIRD_PARTY_NOTICES.md`.
-- **Commands are declared once** in `shared/commands.ts` (id, label, group, keys, accelerator). Keyboard shortcuts, the native menu, tooltips (`hint()`) and the `?` overlay are generated from it; add a handler in `renderer/hooks/useAppCommands.ts`. Never hard-code a shortcut hint.
-- **Styling uses tokens** from `renderer/styles/tokens.css` (colour, type scale, spacing, radii, layers); no raw hex/rgba outside it. Shared UI primitives live in `renderer/components/common/` (Button, Panel/PanelHeader, Kbd, Segmented, Switch, Slider, Dropdown, IconButton, Toast), and `useDismiss` handles Escape and outside-click for every overlay.
-- **Fonts:** Archivo is bundled via `@fontsource-variable/archivo` and Press Start 2P (the home screen's pixel face) via `@fontsource/press-start-2p`, both imported in `renderer/main.tsx`, so the UI works offline. Don't load fonts from a CDN. Font files are never inlined as `data:` URIs: the CSP has no `font-src` (`img-src` alone allows `data:`), so `vite.config.ts` sets `build.assetsInlineLimit` to return false for `.woff2`, `.ttf` and `.otf`.
-- **Home keys:** home screen keys are widget keys handled in `utils/home/state.ts` (`keyToAction`), not `COMMANDS`; the `?` and `l` keys stay reserved.
-- **Effect off means off.** Don't add per-frame work to the bypass path.
-- **DRY:** reuse `renderer/components/common/*` and existing hooks before writing new ones; extract a shared piece once something appears three times. Pure state logic goes in a reducer-style module under `utils/` with tests; hooks stay thin.
-- **File size:** keep files under ~300 lines; split by responsibility when they grow.
-- **Media:** system `ffmpeg`/`ffprobe` from `PATH` (override with `SVP_FFMPEG_PATH` / `SVP_FFPROBE_PATH`). Nothing is bundled. All ffmpeg/ffprobe inputs carry `INPUT_PROTOCOLS` (`-protocol_whitelist`) so a playlist-format file cannot make ffmpeg fetch URLs.
+- **One source of truth.** Brand in `shared/brand.ts` (`tests/brand.test.ts` checks `package.json` and `electron-builder.yml` against it). Channels in `shared/ipc/`. Commands in `shared/commands.ts` and the apps' `commands`; never hard-code a shortcut hint, use `hint()`. Colours, type, spacing, radii and layers in `renderer/theme/tokens.css` and the theme files. Collections in `shared/collections/`.
+- **Tokens only.** No raw hex or rgba outside `renderer/theme/`; use the semantic tokens (`--bg --surface --text --line --accent ...`). Fonts are Barlow and Barlow Condensed from `@fontsource`, bundled, never from a CDN and never inlined as `data:` (the CSP has no `data:` in `font-src`; `vite.config.ts` stops Vite inlining font files).
+- **Common components first.** Reuse `renderer/components/common/*` and the existing hooks before writing a new one. Extract a shared piece at the third use, not before. Apps never build their own confirm dialog (`useShell().confirm`).
+- **File size.** Keep files under about 300 lines; split by responsibility.
+- **Pure logic in tested modules.** Anything with branching goes in a pure module (`*Model.ts`, `*Core.ts`, `*Shape.ts`) with a test in `tests/`; hooks and components stay thin. Main files that import `electron` keep their pure part in a sibling so vitest can load it.
+- **Layering.** `shared/` imports neither `electron` nor React. `electron/` never imports from `renderer/`. A demo's code is in `renderer/apps/<id>/` and, if it needs main, in `shared/ipc/<id>.ts`, `electron/ipc/<id>.ts` and `electron/features/<id>*.ts`.
+- **New IPC** goes `shared/ipc/` then `electron/ipc/` (handler plus validators) and is typed on both sides by the same declaration. Never add a channel that takes a path, a URL or a command from the page.
+- **Styling.** Sentence-case copy; 2 px radii; motion only in answer to an action and not under `prefers-reduced-motion`; visible keyboard focus. App CSS classes start with the app id (`notes-`, `timer-`).
 
 ## Security model
 
-The renderer is sandboxed with context isolation and is treated as untrusted.
+The renderer is sandboxed with context isolation and is treated as untrusted. Main validates everything it receives.
 
-- **Drops:** the page passes `File` objects; the preload resolves them to paths (`webUtils.getPathForFile`). The page never supplies a path string for a drop.
-- **What can be opened:** `probe.ts` rejects anything that is not real video (images, `*_pipe`, playlist/network formats, no video stream, zero duration).
-- **What can be served:** `allowlist.ts` holds only the one native file on screen. Transcodes are served by session id and never allowlist a path. `serveFile` uses the realpath it checked.
-- **Queue:** `openQueued` only accepts paths the main process handed out for the current user selection (`queue.ts`), committed after an item actually opens.
-- **Subtitles:** the renderer holds opaque ids; the main process approves files (picked, dropped, or siblings of the open video), checks extension and size, and converts with a forced demuxer.
-- **Library:** the renderer holds opaque ids only (item = 16 hex of sha1 of the realpath, folder = `f-` plus 8 hex). Folders are added only by the main-process folder dialog or by a real directory drop, and a dropped path is re-resolved and re-`stat`ed in main. `library:open` re-resolves the item's realpath, checks that it is inside a registered folder's realpath, is still a video and still has the same id. Queued siblings are realpaths.
-- **New IPC** goes `shared/types.ts` → `preload.ts` → `ipc.ts` and validates every argument in the main process.
+- **Sender:** only the main window's top frame can call a handler.
+- **Arguments:** every `handle` has a validator (`v.string`, `v.int`, `v.oneOf`, `v.object`, `v.recordId`, `v.collection`, ...); anything unexpected is refused with `Invalid argument #n: expected ...`.
+- **Paths:** the page never supplies a path. Files come from dialogs in main, from real drops resolved in the preload, or from the launch command line. Main hands out opaque ids and checks size and extension.
+- **Collections:** addressed by an allowlisted name (`COLLECTIONS`), records by id, payloads through `heal()`.
+- **Network:** only main, only `NET_HOSTS`, https only. The page's CSP has `connect-src 'none'` when packaged.
+- **Media:** one file at a time, random token, extension check, realpath.
+- **External links:** `links:open` takes a key of `brand.links`; News opens a story by id: main looks the URL up in its own cache and opens it only if it is https (`openExternalHttps`).
+- **Menu:** the page's menu context is cut down by `sanitizeMenuContext` (id pattern, label length, counts, accelerator shape).
+- **Session:** no permission but `fullscreen`; no navigation, popups or webviews.
+- **Logging:** `log:write` is capped (2000 characters, 20 per minute) and line breaks are stripped.
+- **System info** sends no host name, user name, paths or addresses.
 
 ## Concurrency rules
 
-These came out of code review of the queue and transcode paths.
+- Replaced requests are "superseded", not queued: a stale request throws `supersededError()` (`shared/superseded.ts`, marker `APP_SUPERSEDED`); callers treat `isSuperseded(e)` as "ignore silently" (no toast, no state change). News does this with a counter (`latest` in `features/news.ts`). After any `await` in main, re-check the counter before touching module state.
+- In the page only the latest request may set state (check a request counter or an `alive` flag in the effect cleanup).
+- Kill or clear whatever you supersede: timers (`shutdownTimer`), the served media file (`clearServed`), the power-save blocker (`setPreventSleep(false)`); these run from the real shutdown path in `main.ts`, not from `before-quit`, which an unsaved-changes guard can cancel.
+- A dialog or `await` in a main handler can outlive the window: check `getWindow()` afterwards (`editor:save-as`, `data:import`).
 
-- Opens and restarts are superseded, not queued: `playback.ts` bumps a generation counter and a stale request throws `supersededError()` (`shared/superseded.ts`). Callers must treat `isSuperseded(e)` as "ignore silently": no toast, no state change.
-- After any `await` in the main process, re-check the generation before using module-level state.
-- In the renderer only the latest request may set the plan or the loading flag (`usePlaybackSource`).
-- Auto-advance happens only when no load is in flight and the playhead is really at the end (`reachedEnd`): disposing a transcode session also fires `ended` on the old element.
-- Kill child processes you supersede (stream sessions, subtitle extraction).
-- Library opens take a request counter (`openRequest` in `libraryIpc.ts`): the latest click wins, and an older open throws superseded after each await.
-- Library scans have per-folder generations (`scanGen` in `service.ts`), and a stop bumps the epoch: a superseded or stopped scan never touches the index.
+## Stored data
 
-## Verifying rendering without a person
+JSON files in Electron's `userData` folder (Settings > Data > Show data folder opens it). File names match `^[a-z0-9-]+\.json$` (`store/jsonStore.ts`). Writes are atomic (temp file then rename); a failed write is reported, not swallowed.
 
-`electron/devCapture.ts` (disabled in packaged builds) screenshots the window and quits:
+| File | Shape | Written by |
+| --- | --- | --- |
+| `settings.json` | `{version, values}` | `store/settings.ts` |
+| `window-state.json` | `{bounds, maximized}` | `store/windowState.ts` |
+| `notes.json` `tasks.json` `snippets.json` | `{version, items}` | the collection store |
+| `recents.json` | list of recent Editor files | `features/recents.ts` |
+| `news-cache.json` | `{version, feeds}` | `features/news.ts` |
+| `logs/main.log` | text; at 1 MB it moves to `main.old.log` | `features/logger.ts` |
+
+- Every read goes through a `heal()` that takes `unknown`, so a hand-edited or stale file never crashes the app.
+- **Collections and settings:** a file that is not valid JSON or not the expected envelope is "damaged". It is moved aside to `<name>.json.unreadable-<timestamp>` before the first write and the app carries on empty (or with defaults), so nothing is destroyed. A file whose `version` is higher than the code's is "newer": reads give an error (`These notes were saved by a newer version of the app`) or defaults, the file is never touched. Bump `version` in the spec only with a migration in `heal()`.
+- **window-state, recents, news-cache:** a bad file reads as defaults and is overwritten on the next save.
+- **Export/import** (`store/bundle.ts`): `{format: <packageName>, version: 1, exportedAt, settings, collections}`; import replaces only the collections and settings the file contains and heals them.
+
+## Verifying without a person
+
+`electron/devCapture.ts` (off when packaged) screenshots the window and quits. Variables use `brand.envPrefix` (`APP`):
+
+| Variable | Meaning |
+| --- | --- |
+| `APP_CAPTURE=<png>` | turn capture on; write the screenshot there |
+| `APP_CAPTURE_DELAY=3000` | ms before the screenshot (at least enough for the keys) |
+| `APP_CAPTURE_SIZE=1280x800` | content size (check the PNG; the compositor may not honour it) |
+| `APP_CAPTURE_KEYS=a,Down` | keys to press, comma separated, one second after load, 400 ms apart |
+| `APP_CAPTURE_EVAL=<js>` | expression run in the page before the screenshot; logged as `[eval] ...` |
+| `APP_WINDOW_BOUNDS`, `APP_LOG_LEVEL` (`warn`, `error`) | window size override; log threshold |
+| `APP_PLAYER_FILE=/path/clip.mp4` | dev stand-in for the Player's open dialog (same checks) |
 
 ```bash
-pnpm exec vite build && pnpm build:electron
-SVP_CAPTURE=/tmp/out.png SVP_CAPTURE_SIZE=1920x1080 SVP_CAPTURE_DELAY=6000 \
-SVP_CAPTURE_KEYS=shift+E SVP_CAPTURE_EVAL='document.querySelector("canvas")?.width' \
-  pnpm exec electron --no-sandbox . "$PWD/fixtures/clip.mp4"
+pnpm exec vite build --configLoader runner && pnpm build:electron     # no dev server, so port 5173 is not needed
+S=$(mktemp -d)                                                        # throwaway profile
+echo '{"version":1,"items":[{"id":"0123456789abcdef","title":"Seeded","body":"Hi","pinned":false,"createdAt":1,"updatedAt":1}]}' > $S/notes.json
+APP_CAPTURE=$S/out.png APP_CAPTURE_SIZE=1280x800 APP_CAPTURE_DELAY=4000 \
+APP_CAPTURE_EVAL='document.title' \
+  pnpm exec electron --no-sandbox --user-data-dir=$S . app-template://open/notes
 ```
 
-- `SVP_CAPTURE_KEYS` presses keys one second after load (`e`, `n`, `shift+E`, `ArrowRight`, …); `SVP_CAPTURE_EVAL` logs the result of a page expression as `[eval] …`; renderer console output is echoed.
-- Effect state persists between runs, so `e` toggles whatever the last run left. Set state explicitly with an `SVP_CAPTURE_EVAL` that writes or clears `localStorage` in a short first run.
-- Scanlines fade out below 2.5 output pixels per line by design; capture at 1080p or larger to see them, and crop/zoom with ffmpeg to inspect the mask.
-- Manual launches need `--no-sandbox` in dev because the npm-installed `chrome-sandbox` is not setuid; `pnpm dev` adds it automatically. The packaged `.deb` is meant to run sandboxed.
-- Test clips live in `fixtures/` (gitignored). Regenerate with ffmpeg `lavfi` sources, e.g. `smptebars`, `testsrc`, `testsrc2`, `mandelbrot` (mid-tones), plus an HEVC+AC3 MKV to exercise the transcode path and a same-named `.srt` for subtitles.
-- The home screen shows with no file argument. For a library capture use a throwaway profile: `--user-data-dir=<scratch>/ud`, with `<scratch>/ud/library.json` seeded in the shape `electron/library/shape.ts` reads: `{"version":1,"folders":[{"id":"f-1a2b3c4d","path":"/abs/path/to/fixtures"}]}` (the id must match `^f-[0-9a-f]{8}$`, the path must be absolute). Items come from the scan, and `library-meta.json` is the probe cache.
-- `SVP_CAPTURE_KEYS` are passed to `sendInputEvent` as `keyCode` (`devCapture.ts`), and the Electron type asks for accelerator key codes. Use names like `Down`, `Tab`, `Return` and check the result: the DOM name `Enter` was not checked against Electron's list.
-- `SVP_CAPTURE_SIZE` calls `setContentSize`, which the compositor may not honour; check the PNG's dimensions.
-- The home screen's text is in the DOM: `HomeMirror` lists every row with id `home-<zone>-<rowId>`, the screen sets `aria-activedescendant` to the cursor row, so `SVP_CAPTURE_EVAL` can read the cursor. With the effect off there is exactly one `<canvas>`; with it on there are two (the 2D source and the shader canvas).
+- Always pass `--user-data-dir`: it keeps your real data out of the capture, and the single-instance lock is per profile, so a capture still runs while a dev copy is open. Seed a profile by writing `notes.json`, `tasks.json`, `snippets.json` or `settings.json` there before launching (shapes above; ids are 16 hex characters).
+- A deep link or a `.md` file as the last argument opens that sheet or the Editor. `pnpm dev` needs its port free (`strictPort`; it stops with a message if not, and `APP_DEV_PORT` picks another); building first and running `electron .` avoids the dev server.
+- `--no-sandbox` is needed in dev on Linux because the npm-installed `chrome-sandbox` is not setuid root; `pnpm dev` adds it when needed. The packaged `.deb` is meant to run sandboxed.
+- Keys are sent as Electron key codes: single characters (`n`, `?`, `shift+/`) work; check others (`Down`, `Tab`, `Return`) against the result. Shortcuts are ignored while a text field has focus.
+- Light/dark: the window follows the OS; set it by seeding `settings.json` with `{"version":1,"values":{"theme":"kraft","mode":"dark"}}`.
+- The capture ends with `app.exit(0)`, which skips quit guards, so an unsaved Editor cannot hang it.
 
-## Adding an effect
+## Adding an app
 
-1. Create `renderer/shader/effects/<id>/` with `params.ts`, `presets.ts`, `derive.ts`, `pipeline.ts`, `passes/*.frag`, and an `index.ts` exporting an `EffectDefinition` (set `requiresFloat` if needed).
-2. Add it to `effects/registry.ts`. The panel, persistence and shortcuts pick it up from there.
-3. Add tests for `derive.ts`. `tests/effects/definitions.test.ts` runs the generic checks for every effect in `EFFECTS` (unique ids, declared groups, defaults in range, preset validity, `p_`/`d_` names, samplers). `pnpm check:shaders` covers compilation.
+Full steps: `docs/guides/add-an-app.md`. In short: a folder `renderer/apps/<id>/` with `index.ts` (an `AppDefinition`: `id`, `name`, `icon`, `summary`, lazy `component`, optional `commands`), a default-exported `<Id>App.tsx`, CSS with the id as prefix and a pure model with a test; an icon path in `components/common/Icon.tsx`; one import and one array entry in `renderer/apps/registry.ts`; update the expected id list in `tests/registry.test.ts`. Needs saved records: add a collection (`docs/guides/add-a-stored-collection.md`). Needs main: add channels (`docs/guides/add-an-ipc-channel.md`).
 
-A new effect can reuse `glsl/common/` (subcarrier, composite encode/decode, blur, resample), `effects/shared/signal.ts` (NTSC timing) and `effects/shared/tube/` (tube params, derive, passes, display). An effect chunk with the same name as a common or tube chunk silently shadows it (`tests/effects/chunks.test.ts` guards this).
+## Removing a demo
+
+`docs/guides/remove-a-demo.md` has a checklist per demo. The registry line is the visible part; main-backed demos (Editor, Clipboard, Timer, System info, News, Player) also have IPC, feature files and index lines, and a few shared files mention them (`electron/features/files.ts` names the Editor, `store/dataTransfer.ts` imports News and Recents, `tests/registry.test.ts` lists all eight).
 
 ## Website
 
-`website/` is the product site. `website/README.md` is its full guide (setup, Pages, Web3Forms); `website/AGENTS.md` is the Astro template's boilerplate.
+`website/` is a rebrandable Astro site for the app. `website/README.md` is its guide; `website/AGENTS.md` is Astro boilerplate.
 
-- **Separate project.** Own pnpm workspace and lockfile: install with `pnpm --dir website …`, never add site dependencies to the root (or app dependencies to the site).
-- **Branding:** CRT-TV is the site's name only. Don't rename the desktop app, its window, package or `.deb`.
-- **Base path:** the site is served under `SITE_BASE` (default `/shader-video-player`). Every internal link and asset goes through `url()` in `src/lib/site.ts`; `SITE_URL` is the origin only. Values come from `website/.env` locally, or Actions variables in CI.
-- **Forms:** Web3Forms with `PUBLIC_WEB3FORMS_ACCESS_KEY`, a public key by design that ends up in the HTML. Env only, never committed (`.env` is gitignored, `.env.example` is the template); never put a private secret there. No key means the forms render as unavailable, and that path is tested. Signup requires explicit consent; a contact inquiry never subscribes the sender.
-- **Styling:** tokens in `src/styles/global.css`, shared pieces in `src/components/`; same DRY and ~300-line rules as the app. Fonts are the same bundled `@fontsource` packages, no CDN.
-- **Screenshots** in `public/images/` come from the devCapture harness on generated fixtures and show the desktop app's own branding; note how each was made in `public/images/README.md`.
-- **Deploy** happens only through the manual `workflow_dispatch` of `website-pages.yml`. `test:browser` needs port 4321 free (stop a dev server first), mocks every submission and leaves `dist` built without the dummy key.
-- **Install:** `public/install.sh` is served at `<base>/install.sh`; the Download page's `curl … | bash` (`site.installCommand`, built from `SITE_URL` + `url()`) runs it. It reads the newest GitHub release (pre-releases included), so every release must attach `shader-video-player_<version>_amd64.deb` and a `SHA256SUMS` covering it. Keep the script's body inside `main`.
-- **SEO:** canonical/OG meta and `<link rel="sitemap">` in `SiteLayout`, JSON-LD `SoftwareApplication` on the home page. No `robots.txt`: under a project base path crawlers would never read it.
+- **Separate project.** Own pnpm workspace and lockfile: `pnpm --dir website ...`; never add site dependencies to the root or app dependencies to the site.
+- **Config, not pages.** Product facts, deploy defaults, copy and form text live in `website/src/config/` (`product.ts`, `deploy.ts`, `site.ts`, `content.ts`, `forms.ts`, `pages/*.ts`). The installer script served at `<base>/install.sh` is generated from that config (`src/pages/install.sh.ts`), not hand-written.
+- **Base path.** The site is served under `SITE_BASE` (default `/electron-app-template`, from `deploy.ts`); every link and asset goes through `url()` in `src/config/site.ts`. `SITE_URL` is the origin only.
+- **Forms.** Web3Forms with `PUBLIC_WEB3FORMS_ACCESS_KEY`, a public key by design (it ends up in the HTML). Env only (`website/.env`, gitignored). No key means the forms render as unavailable, and that path is tested. Signup requires consent.
+- **Tests.** `test:browser` builds twice (dummy key with mocked submissions, then no key), uses port 4321 or `PREVIEW_PORT`, and leaves `dist` built without the dummy key.
+- **Deploy** happens only through the manual `workflow_dispatch` of `website-pages.yml`. Fonts: same bundled `@fontsource` packages, no CDN. Screenshots come from the capture harness (`website/public/images/README.md`).
 
 ## Known gaps
 
-- CRT preset values were tuned against synthetic test patterns only; they need a pass against real footage.
-- VHS presets were tuned on a handful of clips; they need a pass against more real footage.
-- VHS: not checked by a person: how wobble and tracking-band roll look in motion, and slider dragging.
-- VHS models NTSC only (no PAL/SECAM) and the picture only; audio is not degraded.
-- VHS dropouts are seeded per render, so a replayed frame does not get the same dropouts.
-- VHS with the TV stage off still renders at display rate while the hidden tube "Static noise" parameter is non-zero (it is `animated`).
-- Not yet exercised interactively: slider dragging, drag-and-drop, file dialogs, fullscreen, context-loss recovery, the installed `.deb`.
-- Not measured: 4K frame time, whether hardware video decode engages (`chrome://gpu`).
-- The horizontal filter in `beam.glsl` does not widen when the raster is minified (windows narrower than the raster width may alias).
-- Phosphor persistence treats a re-render of the same paused frame as a new frame.
-- No HDR, no image-based subtitles (PGS/VobSub), ASS styling is dropped on conversion.
-- Home screen: thumbnails and a tape-shelf view are not built (`thumb` is reserved in the library item and always null). Search, per-folder sort options and an online update check are out of scope (per the spec).
-- Home screen: directory drop and the Add folder dialog are not exercised interactively (`partitionDrop` is unit-tested only).
-- Home screen: non-Latin file names draw in the browser's monospace fallback, squeezed into one cell per code point.
-- Home screen: the VHS "Third-generation dub" label is cut to `THIRD-GENERATION` in the TV column unless the cursor is on it, when it scrolls.
-- Website: real Web3Forms delivery is unverified (needs a live key and inbox).
-- Home screen: context-loss recovery on the GL path is untested. The effect-off path still runs the paint timers (see How it fits together).
+Never exercised by a person (tests and capture runs cover the logic and the first paint, not these):
+
+- Tray icon and menu, tray status text from the Timer, native notifications and their click-through, close-to-tray.
+- Real file dialogs (open, save, export, import), drag-and-drop from a file manager, quitting with unsaved Editor changes.
+- Deep links and the `.md` file association on an installed `.deb` (the association ships commented out in `electron-builder.yml`).
+- The installed `.deb`, and the Windows and macOS builds at all (targets are configured only).
+- Clipboard on Wayland, fullscreen in the Player, theme following a live OS light/dark change, keyboard focus order.
+- Real form delivery on the website (needs a live Web3Forms key).
+
+Checked once, by machine: `pnpm dist` built `release/electron-app-template_0.1.0_amd64.deb`, and the unpacked build started and rendered the sheet index from the private scheme. The `.deb` itself was not installed.
+
+Not hardened: the packaged app still accepts Chromium switches such as `--remote-debugging-port` (Electron's default). Turn them off with Electron fuses (`@electron/fuses`) before shipping a real app.
+
+Not built (outlines in `docs/guides/not-built.md`): auto-update, multiple windows, translations, SQLite, code signing.
+
+Placeholders to set: `brand.links.website` is `https://example.com/`, the repository URL is a guess, icons are generated placeholders.
 
 ## Commits
 
-Small, descriptive checkpoints: imperative subject line, optionally prefixed with the area (`Home:`, `VHS:`, `Library:`, `Site:`, `Docs:`), body listing what changed and why. One workstream per commit, and each commit should pass the gates on its own.
+Small, descriptive checkpoints: imperative subject line, optionally prefixed with the area (`Main:`, `Store:`, `Shell:`, `Notes:`, `Site:`, `Docs:`), body listing what changed and why. One workstream per commit, and each commit should pass `pnpm typecheck && pnpm test` on its own.

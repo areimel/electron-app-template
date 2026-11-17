@@ -1,38 +1,25 @@
-# Repository Guidelines
+# Repository guidelines
 
-## Project Structure & Module Organization
+`CLAUDE.md` is the full guide: layout, how the pieces fit together, the rules, the security model and the gates. Read it first; this file only lists the basics and does not repeat it.
 
-This Linux-first Electron player uses React, strict TypeScript, and WebGL2 effects.
+## Setup and checks
 
-- `electron/`: main process, preload bridge, IPC, media processing, and library indexing.
-- `renderer/`: React components, hooks, styles, and utilities. Effects live in `shader/effects/`; reusable GPU infrastructure lives in `shader/gl/`.
-- `shared/`: IPC types and central command/shortcut definitions.
-- `tests/`: Vitest logic tests and the GPU shader compilation entry point.
-- `scripts/`: development, bundling, and shader validation tools.
-- `docs/`: specifications and screenshots; `fixtures/`: test media; `build/`: packaging assets.
+Node 24 and the pnpm version pinned in `package.json`. `pnpm install`, then `pnpm dev`.
 
-Read `CLAUDE.md` for architecture guidance and the relevant specification under `docs/superpowers/specs/` before changing shader architecture.
+Before every commit: `pnpm typecheck && pnpm test`, and check the exit status itself (do not pipe it through `tail` or `grep`). Target one test file with `pnpm test tests/store/collection.test.ts`. `pnpm build` runs the type check and both bundles. The `website/` folder has its own checks (`pnpm --dir website check`, `build`, `test:browser`).
 
-## Build, Test, and Development Commands
+## Where things go
 
-Use Node 24 and the pnpm version pinned in `package.json`. Install `ffmpeg` and `ffprobe` on `PATH`.
+- Main process code in `electron/`; the page in `renderer/`; code both sides import in `shared/`. Main never imports from `renderer/`; `shared/` never imports `electron` or React.
+- A demo app is `renderer/apps/<id>/` plus one line in `renderer/apps/registry.ts`. Guides for each common change are in `docs/guides/`.
+- Brand, IPC channels, commands, collections and colour tokens are each declared in one place; edit that place instead of copying values.
+- New IPC channels: declare in `shared/ipc/`, handle and validate every argument in `electron/ipc/`.
+- Pure logic goes in a tested module under `tests/`; keep files under about 300 lines; reuse `renderer/components/common/*` and extract a shared piece at the third use.
 
-- `pnpm install`: install dependencies.
-- `pnpm dev`: start Vite, Electron bundling in watch mode, and Electron.
-- `pnpm typecheck`: check renderer, tests, shared code, and Electron types.
-- `pnpm test`: run Vitest once; target a file with `pnpm test tests/queue.test.ts`.
-- `pnpm check:shaders`: compile every effect pass on a real GPU in a hidden Electron window.
-- `pnpm build`: typecheck and produce renderer/main bundles.
-- `pnpm dist`: build a Linux x64 `.deb` in `release/`.
+## Style
 
-## Coding Style & Naming Conventions
+Two-space indentation, double quotes, semicolons; PascalCase components, camelCase functions, `use*` hooks. Copy is sentence case. Colours come from the tokens in `renderer/theme/`. No lint or format script is configured. Name tests `tests/**/*.test.ts` (vitest `describe`, `it`, `expect`); they do not start Electron or render the DOM.
 
-Follow existing TypeScript style: two-space indentation, double quotes, and semicolons. Use PascalCase for React components, camelCase for functions and variables, and `use*` names for hooks. Keep `App.tsx` focused on composition; place reusable logic in hooks or utilities. Define commands in `shared/commands.ts` and bridge contracts in `shared/types.ts`. No dedicated formatter or lint script is configured.
+## Commits and pull requests
 
-## Testing Guidelines
-
-Name logic tests `tests/**/*.test.ts`, using Vitest `describe`, `it`, and `expect`. Cover behavior and edge cases; Vitest tests do not exercise GL. No coverage threshold is configured. Before committing, run `pnpm typecheck && pnpm test && pnpm check:shaders` and inspect exit statuses directly. Manually verify visual changes in the player.
-
-## Commit & Pull Request Guidelines
-
-History uses concise descriptive subjects, sometimes prefixed by area, such as `Home:` or `Docs:`. Follow that pattern. PRs should explain the problem, resulting behavior, and validation performed; link relevant issues and include screenshots for visual changes.
+Concise imperative subjects, optionally prefixed with the area (`Main:`, `Store:`, `Shell:`, `Notes:`, `Site:`, `Docs:`); one workstream per commit, each passing the gates. A pull request says the problem, the behaviour now and how it was checked, and includes screenshots for visual changes. The capture harness in `CLAUDE.md` ("Verifying without a person") makes them.

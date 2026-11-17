@@ -1,201 +1,124 @@
-# Shader Video Player
+# App Template
 
-A desktop video player that plays your files through real-time shader effects. The first effect is a physically inspired **CRT television**: scanline beams, phosphor masks, glow, tube curvature and analog composite/S-Video signal artefacts, with presets and a control for every parameter. A second effect, a **VHS tape**, models a home video deck: tape bandwidth, head-switching and tracking faults, dropouts and an optional TV stage.
+A starter for desktop apps. It is a working Electron app that opens on a menu of eight small demo apps, each showing one thing a desktop app needs to do: keep data in files, open and save files, use the clipboard, run in the background, call the network safely, play a local file. Around the demos is the shared plumbing every app needs: themes, settings, a native menu, a tray, notifications and a safe way for the page to talk to the rest of the computer.
 
-Built on Electron, React and WebGL2. Linux (Wayland/X11) is the supported platform for now.
+Clone it, rename it, delete the demos you do not need, and build your app on what is left. Read the code to learn how desktop apps fit together.
 
-> Status: early development. Everything below works, but the presets were tuned on test patterns and a few clips and still need a pass against real footage. See [Known limitations](#known-limitations).
-
-![CRT effect with the settings panel open](docs/images/crt-effect-panel.jpg)
-
-<details><summary>Close-up of three presets (Trinitron, Arcade, PVM)</summary>
-
-![Phosphor mask and scanline close-ups](docs/images/presets-closeup.jpg)
-
-</details>
-
-## Features
-
-- Plays MP4, MKV, WebM, MOV, AVI and more. Formats Chromium cannot decode (HEVC, AC3/DTS audio, AVI…) are converted on the fly with ffmpeg.
-- Open dialog, drag and drop, an Open Recent menu, resume position, playback speed, audio track selection, fullscreen, picture-in-picture, and a remaining-time toggle.
-- Opens only real video files: images, playlists and network formats are refused.
-- Play queue: open or drop several files (Ctrl+Shift+O, or Shift+drop, adds to the queue), next/previous, auto-advance, and loop off / all / one.
-- Top bar with the file name and queue position. Ctrl+W or the top-bar back button returns to the home screen.
-- End screen when the queue finishes: Replay, Play queue again, or Back to home.
-- Home screen, drawn through the active effect: a TV-guide style video library (recently played, then your folders), a TV preset picker that is the same setting as the effects panel, and the latest updates.
-- Video library: add folders you choose (Add library folder, or drop a folder on the home screen). Videos are listed with their length and resolution, and the folders are watched for changes.
-- Screenshots (`S` or Ctrl+Shift+S) save the current frame, with the active effect applied, as a PNG.
-- Subtitles: embedded tracks plus external `.srt`, `.vtt`, `.ass` files (a file named like the video is picked up automatically). Subtitles are drawn above the effect so they stay sharp, with a text size control and a timing delay.
-- Shortcut overlay: press `?` for the full list of keys.
-- Keyboard-accessible sliders, menus and panels; `Escape` closes whatever overlay is open.
-- CRT effect with four presets: Consumer TV (composite), Trinitron (S-Video), Arcade monitor (RGB), Broadcast monitor (PVM), and a settings panel with a control for each of its ~50 parameters. Settings are remembered between runs.
-- VHS tape effect with seven presets, three framing modes and a settings panel. Choose it from the effect dropdown in the effects panel. See [How the VHS effect works](#how-the-vhs-effect-works).
-- Effects can be switched off instantly; with no effect active the video plays through the normal, low-power path.
-- On first run the CRT effect is on with its first preset (Consumer TV). After that your last choice is kept, including off.
+Stack: Electron 45, React 19, TypeScript (strict), Vite 8, esbuild for the main process, vitest, pnpm 11. License: MIT.
 
 ## Requirements
 
-- Node 24 and pnpm
-- `ffmpeg` and `ffprobe` on your `PATH` (`sudo apt install ffmpeg`)
-- A GPU with WebGL2 and floating-point render targets (any reasonably recent GPU; without them the effects switch themselves off with a message)
+- Node 24 and pnpm 11 (the exact pnpm version is pinned in `package.json`; `corepack enable` provides it).
+- Linux is where it was developed and tested. Windows and macOS builds are configured but have never been run.
+- For rebuilding the placeholder icons only: ImageMagick (`convert`).
 
-## Install (beta)
-
-On Debian, Ubuntu or Pop!_OS (x64):
-
-```bash
-curl -fsSL https://areimel.github.io/shader-video-player/install.sh | bash
-```
-
-The script downloads the newest `.deb` from [GitHub Releases](https://github.com/areimel/shader-video-player/releases), checks its SHA-256 and installs it with `apt` (which also installs `ffmpeg`). To do it by hand, download `shader-video-player_<version>_amd64.deb` from the release and run `sudo apt install ./shader-video-player_<version>_amd64.deb`. The app then appears in your application launcher, and `shader-video-player` runs it from a terminal. Remove it with `sudo apt remove shader-video-player`.
-
-## Getting started (from source)
+## Quick start
 
 ```bash
 pnpm install
-pnpm dev                 # run in development
-pnpm dist                # build a .deb into release/
-sudo apt install ./release/shader-video-player_0.3.0_amd64.deb
+pnpm dev
 ```
 
-In development Electron is started with `--no-sandbox`, because the sandbox helper installed by the package manager is not setuid. The packaged `.deb` runs sandboxed.
+`pnpm dev` starts the Vite dev server on port 5173 (it stops with an error if that port is taken; `APP_DEV_PORT=5199 pnpm dev` uses another), bundles the main process in watch mode and opens the window. Page changes reload live; main process changes need a restart.
 
-### Keyboard shortcuts
+Before a commit run `pnpm typecheck && pnpm test` and check that it exits 0.
 
-Every shortcut is declared once in [`shared/commands.ts`](shared/commands.ts). Press `?` in the app to see the same list.
+## What is in the box
 
-| Group | Command | Keys (Linux / Windows) |
-|---|---|---|
-| File | Open… | Ctrl+O |
-| | Add to Queue… | Ctrl+Shift+O |
-| | Close | Ctrl+W |
-| | Screenshot | S, Ctrl+Shift+S |
-| Playback | Play / Pause | Space |
-| | Back 5 seconds | ← |
-| | Forward 5 seconds | → |
-| | Back 30 seconds | Shift+← |
-| | Forward 30 seconds | Shift+→ |
-| | Volume up | ↑ |
-| | Volume down | ↓ |
-| | Mute | M |
-| | Slower | [ |
-| | Faster | ] |
-| | Previous | P |
-| | Next | N |
-| | Cycle loop mode | L |
-| | Show remaining time | T |
-| Subtitles | Subtitles earlier | G |
-| | Subtitles later | H |
-| Effects | Toggle effect | E |
-| | Effects panel | Shift+E |
-| View | Fullscreen | F |
-| | Info | I |
-| | Keyboard shortcuts | ? |
+| Sheet | What it shows | What it teaches |
+| --- | --- | --- |
+| Notes | List, search, edit | Saved records through `useCollection`, search, 500 ms debounced autosave |
+| Tasks | Checklist | Records, filters, reordering, undo from a toast |
+| Editor | Text and Markdown files | Open and save dialogs, recent files, drag and drop, unsaved-changes guard, Markdown preview |
+| Clipboard | System clipboard and snippets | Reading and writing the clipboard through the main process |
+| Timer | Countdown | State kept in the main process, native notification, tray status |
+| System info | CPU, memory, uptime | Live data pushed from main only while the sheet is open |
+| News | Hacker News front page | Network calls through main, cache, loading, offline and error states, opening links safely |
+| Player | One local video or audio file | A custom file protocol that serves a single chosen file, fullscreen |
 
-Shift+drop adds dropped files to the queue. Load Subtitle… and Picture in picture have no keyboard shortcut; use the menu or the controls.
+Also built in: Settings (three themes, each in light and dark, an accent colour override, close to tray, notifications, export, import and reset of your data, About with the changelog and credits), a command palette (`Ctrl/Cmd+K`), a shortcut help (`?`), a native menu, deep links (`app-template://open/notes`) and a website template in `website/`.
 
-On macOS the same shortcuts use ⌘ in place of Ctrl (Ctrl+O is ⌘O) and ⇧ in place of Shift. Linux is the supported platform.
+## Make it your own
 
-Other commands: `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm check:shaders`, which compiles every shader pass on your GPU in a hidden window.
+Start with `docs/guides/start-a-new-app.md`. In short:
 
-Environment variables:
+1. Edit `shared/brand.ts`: name, tagline, package name, app id, URL scheme, links, author.
+2. Make the copies match, or `pnpm test` fails (`tests/brand.test.ts` checks them): `package.json` (`name`, `productName`, `description`, `author`, `homepage`, `repository.url`, `desktopName`) and `electron-builder.yml` (`appId`, `productName`, `copyright`, the deep-link scheme, `executableName`, `artifactName`).
+3. Replace the icons in `build/` (`icons/<N>x<N>.png`, `icon.png`, `tray.png`) with your own, or regenerate the placeholders with `node scripts/make-icons.mjs`.
+4. Set the placeholders: `links.website` in `shared/brand.ts` is `https://example.com/`, and the repository URL (`github.com/areimel/electron-app-template`) is a guess.
+5. Replace `LICENSE`, this README, `CHANGELOG.md` and `THIRD_PARTY_NOTICES.md`.
+6. Remove demos with `docs/guides/remove-a-demo.md`.
 
-| Variable | Purpose |
-|---|---|
-| `SVP_FFMPEG_PATH`, `SVP_FFPROBE_PATH` | Use specific ffmpeg/ffprobe binaries instead of the ones on `PATH` |
-| `SVP_NO_HWDEC=1` | Disable the hardware video decode switches |
+## Scripts
 
-## How the CRT effect works
-
-The video is not simply overlaid with lines. Each frame goes through a chain of shader passes:
-
-1. **Raster** — the picture is resampled onto the tube's raster (240–576 scan lines), with overscan and colour controls.
-2. **Signal** — the raster is carried over a simulated RGB, S-Video or composite connection. Composite modulates colour onto a subcarrier and decodes it again, which is what produces colour bleed, dot crawl and rainbowing.
-3. **Linearize + persistence** — tube gamma, then phosphor afterglow from the previous frame.
-4. **Glow and diffusion** — light spreading in and through the glass.
-5. **Tube** — at full screen resolution: curvature, convergence, a per-channel electron beam whose width grows with brightness, the phosphor mask (aperture grille, slot or shadow mask) locked to your display's pixels, brightness compensation, vignette, reflection and noise.
-
-Only the last step runs at screen resolution; the rest work on the small raster, which keeps the effect affordable. Scanlines fade out automatically when the window is too small to show them cleanly (below about 2.5 screen pixels per line), so they are most visible at 1080p and above.
-
-Every parameter is declared once in `renderer/shader/effects/<effect>/params.ts` (tube parameters in `effects/shared/tube/params.ts`); the settings panel, shader uniforms, presets and saved settings are all generated from that table.
-
-## How the VHS effect works
-
-The VHS effect records the picture to a simulated tape and plays it back, adding the tape's faults on the way. Every pass works on a tape raster of 240 or 480 lines:
-
-1. **Frame** — the video is fitted to the tape raster, converted to luma and chroma, and given saturation and tint. The camcorder date stamp is drawn here, so it is recorded too.
-2. **Tape, horizontal** — luma is band-limited to about 3 MHz at SP (less at LP and EP, and in later generations), with edge sharpening that leaves halos. Colour is limited to about 0.4 MHz and delayed to the right, as on a colour-under recording. Luma and chroma noise is added, along with time-base errors: line jitter, slow wobble, a bend at the top of the picture and a shift in the head-switch band.
-3. **Tape, vertical** — chroma is smeared across neighbouring lines by the deck's one-line comb, dropouts are added as white streaks, and the head-switch and tracking bands get extra noise. The VCR on-screen display (play symbol, tape speed, counter) is drawn here.
-4. **Composite** (optional) — with Output set to Composite (the default) the signal is encoded as NTSC composite and decoded again, which produces dot crawl and rainbowing. Y/C (S-Video) skips this step.
-5. **TV** (optional, off by default) — the picture is shown on a simulated tube using the same beam, mask, glow and geometry code as the CRT effect. With the TV off, the picture is drawn flat, as on a capture card.
-
-Presets, in the order they appear in the dropdown:
-
-- Home recording (SP), the default for new users
-- Worn rental
-- Six-hour EP
-- Camcorder (date stamp)
-- VCR on a TV
-- Third-generation dub
-- Bad tracking
-
-The camcorder and VCR-on-a-TV presets turn the on-screen display on; the others leave it off. Framing is one of Keep aspect (the default), 4:3 crop or 4:3 letterbox. The effect changes the picture only; audio is untouched. It models NTSC only, with no PAL or SECAM.
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Vite + main process watch + Electron |
+| `pnpm typecheck` | type-checks the page, shared code and tests, then the main process |
+| `pnpm test` | vitest, pure logic only (no Electron window) |
+| `pnpm build` | typecheck, then the page into `dist-renderer/` and the main process into `dist-electron/` |
+| `pnpm dist` | build, then a Linux `.deb` in `release/` |
+| `pnpm dist:win`, `pnpm dist:mac` | build, then a Windows installer or a macOS dmg (configured, never run) |
+| `node scripts/make-icons.mjs` | regenerate placeholder icons |
 
 ## Project layout
 
 ```
-electron/                  main process: windows, IPC, local-file protocol, play queue
-electron/media/            ffprobe, ffmpeg transcode sessions, subtitle conversion
-renderer/                  React UI (components, hooks, styles)
-renderer/shader/gl/        small WebGL2 multi-pass engine
-renderer/shader/glsl/      shared GLSL chunks
-renderer/shader/effects/   effect definitions (crt/, vhs/) and effects/shared/ (tube stage, NTSC timing)
-shared/                    types and helpers shared by both processes
-tests/                     unit tests and the shader compile check
-scripts/                   dev, build and shader-check scripts
-docs/superpowers/specs/    design documents
-website/                   Astro product site (CRT-TV), its own pnpm workspace; see below
-.github/workflows/         CI (typecheck + tests on push/PR) and the manual website deploy
-AGENTS.md                  short contributor guide
-TODO.md                    publishing tasks and wish list
+electron/     main process: window, menu, tray, IPC handlers, file store, features
+shared/       code both sides import: brand, IPC channel declarations, collections, commands, settings, themes
+renderer/     the page: shell, apps/ (the demos), settings, theme, components, hooks
+tests/        vitest tests
+docs/guides/  task guides
+website/      Astro site template
 ```
 
-See `CLAUDE.md` for the conventions used in this codebase, the security model and how to verify rendering from the command line.
+Some terms. The **main process** (`electron/`) is the Node side: it can read files, use the network and the OS. The **renderer** (`renderer/`) is the web page: sandboxed, so it cannot, and it is treated as untrusted. The **preload** script (`electron/preload.ts`) is the only bridge; it gives the page `window.app`. **IPC** is the messages that cross that bridge. `CLAUDE.md` describes how it all fits together in detail.
 
-## Known limitations
+## Security model in brief
 
-- Linux only for now; no Windows or macOS builds.
-- SDR output only. HDR files play, but tone-mapped by the browser engine.
-- Drawing through shaders uses more GPU and power than plain playback; 4K performance has not been measured yet.
-- Files that need a full video transcode (for example HEVC without hardware decoding) are CPU-heavy, and seeking in them restarts the conversion.
-- Image-based subtitles (PGS, VobSub) are not supported, and `.ass` styling is dropped.
-- Whether hardware video decoding engages depends on your GPU and drivers; set `SVP_NO_HWDEC=1` if it misbehaves.
+- The page runs sandboxed with context isolation and no Node access. Main checks every message it receives (who sent it, the channel, each argument).
+- The page never supplies a file path or a URL. Files come from dialogs and real drops handled in main; the page gets opaque ids.
+- The packaged page is served from a private scheme, not `file://`, with one Content-Security-Policy (the browser rule for what a page may load) that forbids network access from the page. Network calls go through main to an allowlist of hosts, https only.
+- Stored data is read through validators, so a damaged or hand-edited file does not crash the app. A file it cannot read is moved aside, never overwritten.
+- No camera, microphone or other permissions are granted; navigation, popups and webviews are blocked.
 
-## Roadmap
+## Build and package
 
-1. Tune the CRT presets against real footage.
-2. Performance measurements and a quality toggle for integrated GPUs.
-3. Wish list: export a video with the effect applied, ideally from the command line too.
+```bash
+pnpm dist
+```
 
-## Credits and licence
+Writes `release/electron-app-template_<version>_amd64.deb` (the name follows `artifactName` in `electron-builder.yml`). Installed builds register the `app-template://` link scheme. A `.md` file association exists in `electron-builder.yml` but is commented out: once installed it would make the app a candidate for every Markdown file on the machine; the comment there says how to turn it on. The `.deb` has not been installed and tried by a person.
 
-MIT — see [LICENSE](LICENSE).
+## Website
 
-The player is based on [babu-video-player](https://github.com/babu-studios/babu-video-player) by Babu Studios (MIT). Shader techniques draw on published work credited in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). ffmpeg is used as an external program and is not bundled. The interface typeface, Archivo, and the home screen's pixel face, Press Start 2P (both SIL Open Font License 1.1), are bundled so the app works offline.
-
-## Product website
-
-The product site lives in [`website/`](website/README.md): a static [Astro](https://astro.build) site branded **CRT-TV** with Home, Download, Docs and Contact pages, a launch-update signup and a contact form. The CRT-TV name is used on the site only; the desktop app is still Shader Video Player.
-
-The site has its own pnpm workspace and lockfile, separate from the desktop app's:
+`website/` is an Astro site for the app, with its own `package.json` and lockfile. Rebrand it through `website/src/config/`; `website/README.md` has the full guide.
 
 ```bash
 pnpm --dir website install --frozen-lockfile
-cp website/.env.example website/.env      # set PUBLIC_WEB3FORMS_ACCESS_KEY to enable the forms
-pnpm --dir website dev --background       # http://localhost:4321/shader-video-player/
-pnpm --dir website check                  # Astro type check
-pnpm --dir website build                  # static output in website/dist
-pnpm --dir website test:browser           # Playwright: desktop/mobile layouts, links, forms (mocked)
+pnpm --dir website dev --background    # http://localhost:4321/electron-app-template/
+pnpm --dir website check
+pnpm --dir website build
+pnpm --dir website test:browser
 ```
 
-The forms post to [Web3Forms](https://web3forms.com/) with a public access key; without a key they show as unavailable. Deployment to GitHub Pages runs only when you start the **Deploy CRT-TV website** workflow by hand. The Download page's install command runs `website/public/install.sh`, which installs the newest `.deb` from GitHub Releases. See [`website/README.md`](website/README.md) for setup, Pages configuration and editing notes.
+## Guides
+
+- `docs/guides/start-a-new-app.md`: clone, rebrand, cut demos, first run
+- `docs/guides/add-an-app.md`: a new sheet
+- `docs/guides/remove-a-demo.md`: what to delete, per demo
+- `docs/guides/add-a-stored-collection.md`: saved records
+- `docs/guides/add-an-ipc-channel.md`: page to main process
+- `docs/guides/add-a-theme.md`
+- `docs/guides/add-a-command.md`: shortcut, menu item, palette entry
+- `docs/guides/not-built.md`: auto-update, multiple windows, translations, SQLite, code signing (outlines only)
+- `CLAUDE.md`: architecture and rules (also the instructions coding agents read)
+- `docs/superpowers/specs/2026-11-17-app-template-design.md`: why it is built this way
+
+## Known gaps
+
+Checked by tests and screenshot runs, but never tried by a person: the tray icon and menu, notifications, close to tray, file dialogs, drag and drop from a file manager, quitting with unsaved Editor changes, deep links and the file association on an installed copy, the clipboard on Wayland, fullscreen in the Player, following a live system light/dark change, the installed `.deb`, the Windows and macOS builds, and real form delivery on the website. Not built: auto-update, multiple windows, translations, SQLite, code signing. See `TODO.md`.
+
+## License
+
+MIT, see `LICENSE`. Third-party notices are in `THIRD_PARTY_NOTICES.md`.
