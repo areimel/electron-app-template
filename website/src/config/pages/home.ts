@@ -12,10 +12,12 @@ export const home = {
   },
   sheetIndex: {
     heading: "The sheet index",
+    columns: { sheet: "Sheet", demo: "Demo", shows: "What it shows" },
     intro: "The app opens on a ruled index. Each numbered row opens one demo, and each demo teaches one thing you will need in a real desktop app.",
   },
   features: {
     heading: "What every demo shares",
+    intro: "Each demo is small because the plumbing underneath it is already done.",
   },
   makeItYours: {
     heading: "Make it yours",
