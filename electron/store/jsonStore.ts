@@ -25,6 +25,11 @@ export function readJson<T>(name: string, heal: (raw: unknown) => T): T {
   return heal(raw);
 }
 
+/** Deletes `userData/<name>`; a missing file is fine. */
+export function removeJson(name: string): void {
+  rmSync(storePath(name), { force: true });
+}
+
 /**
  * Writes atomically (temp file + rename) so a crash mid-write never leaves a truncated file behind.
  * Persistence is non-fatal everywhere it is used: returns false instead of throwing.
