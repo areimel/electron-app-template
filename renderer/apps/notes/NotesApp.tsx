@@ -5,12 +5,11 @@ import { SplitPane } from "../../components/common/SplitPane";
 import { Spinner } from "../../components/common/Spinner";
 import { useCollection } from "../../hooks/useCollection";
 import { useCommandHandlers, useShell, useTitleInfo, type SaveState } from "../../shell/ShellContext";
+import { errorMessage } from "../../utils/errorMessage";
 import { NoteEditor } from "./NoteEditor";
 import { NoteList } from "./NoteList";
 import { displayTitle, filterNotes, noteCount, sortNotes } from "./notesModel";
 import "./notes.css";
-
-const reason = (e: unknown) => (e instanceof Error ? e.message : "unknown error");
 
 export default function NotesApp() {
   const { items, status, error, reload, create, remove, restore, update } = useCollection("notes");
@@ -40,7 +39,7 @@ export default function NotesApp() {
       setJustCreated(note.id);
       select(note.id);
     } catch (e) {
-      toast("error", `A new note could not be created (${reason(e)}). Try again.`);
+      toast("error", `A new note could not be created (${errorMessage(e)}). Try again.`);
     }
   };
 
@@ -55,7 +54,7 @@ export default function NotesApp() {
       select(null);
       toast("info", "Note deleted", { label: "Undo", run: () => void restore(removed).then(() => select(removed.record.id)) });
     } catch (e) {
-      toast("error", `The note could not be deleted (${reason(e)}). Try again.`);
+      toast("error", `The note could not be deleted (${errorMessage(e)}). Try again.`);
     }
   };
 
