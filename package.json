@@ -1,0 +1,45 @@
+{
+  "name": "shader-video-player",
+  "productName": "Shader Video Player",
+  "version": "0.3.0",
+  "description": "Desktop video player with real-time shader effects (CRT, VHS)",
+  "main": "dist-electron/main.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "build:electron": "node scripts/build-electron.mjs",
+    "build": "pnpm typecheck && vite build && pnpm build:electron",
+    "test": "vitest run",
+    "dist": "pnpm build && electron-builder --linux deb --x64",
+    "check:shaders": "node scripts/check-shaders.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.3.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "wait-on": "^9.5.1"
+  },
+  "author": "Alec Reimel",
+  "homepage": "https://areimel.github.io/shader-video-player/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/areimel/shader-video-player.git"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "desktopName": "shader-video-player.desktop"
+}

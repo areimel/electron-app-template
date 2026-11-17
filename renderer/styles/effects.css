@@ -1,0 +1,17 @@
+.fx-panel { position: absolute; top: 48px; right: var(--sp-4); bottom: calc(var(--controls-h) + var(--sp-2)); width: 320px; overflow-y: auto; }
+.fx-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fx-row-label { color: var(--dim); }
+.fx-badge { font-size: var(--fs-xs); color: var(--lamp); }
+.fx-group { border-top: 1px solid var(--line); padding: var(--sp-1) 0; }
+.fx-group-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 0; background: none; border: 0;
+  color: var(--phosphor); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.fx-chevron { width: 10px; color: var(--dim); }
+.fx-param { padding: 6px 0 var(--sp-2); }
+.fx-param-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-1); min-height: 20px; }
+.fx-param-label.is-modified { color: var(--lamp); }
+.fx-value { color: var(--dim); font-variant-numeric: tabular-nums; }
+.fx-reset { margin-top: 10px; }
+.fx-select { flex: 1; min-width: 0; }
+.fx-param .fx-select { width: 100%; }
+.fx-select .dropdown-btn { width: 100%; justify-content: flex-start; background: var(--hover); height: 30px; }
+.fx-select .dropdown-menu { top: 34px; bottom: auto; left: 0; right: 0; z-index: 2; }
