@@ -26,6 +26,6 @@ export default defineConfig({
     // The CSP has no data: font-src: never inline font files (small subsets fall under the 4 KB default).
     assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
   },
-  server: { port: 5173, strictPort: true },
+  server: { port: Number(process.env.APP_DEV_PORT) || 5173, strictPort: true },
   test: { root: resolve(import.meta.dirname), include: ["tests/**/*.test.ts"] },
 });
