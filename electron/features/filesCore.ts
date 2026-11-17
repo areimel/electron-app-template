@@ -1,0 +1,54 @@
+// Pure parts of files.ts (no electron import, so tests can load them).
+import { dirname } from "node:path";
+
+export const EDITOR_MAX_BYTES = 2 * 1024 * 1024;
+export const TEXT_EXTENSIONS = [".md", ".markdown", ".txt"] as const;
+
+export function isTextFileName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return TEXT_EXTENSIONS.some((e) => lower.endsWith(e));
+}
+
+/** Throws "Too large" or "Not a text file". Text means valid UTF-8 with no NUL bytes. */
+export function decodeText(buf: Uint8Array, maxBytes: number): string {
+  if (buf.byteLength > maxBytes) throw new Error("Too large");
+  if (buf.includes(0)) throw new Error("Not a text file");
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buf).replace(/^﻿/, "");
+  } catch {
+    throw new Error("Not a text file");
+  }
+}
+
+/** Display-only folder text: the home directory shows as "~". Never accepted back from the renderer. */
+export function displayFolder(path: string, home: string): string {
+  const dir = dirname(path);
+  if (home && (dir === home || dir.startsWith(`${home}/`) || dir.startsWith(`${home}\\`))) return `~${dir.slice(home.length)}`;
+  return dir;
+}
+
+/** Bounded two-way map between random file ids and paths. The renderer only ever holds the id. */
+export class HandleTable {
+  private byId = new Map<string, string>();
+  private byPath = new Map<string, string>();
+  constructor(private max: number, private makeId: () => string) {}
+
+  handle(path: string): string {
+    const known = this.byPath.get(path);
+    if (known) return known;
+    const id = this.makeId();
+    this.byId.set(id, path);
+    this.byPath.set(path, id);
+    if (this.byId.size > this.max) {
+      const oldest = this.byId.keys().next().value as string;
+      const oldPath = this.byId.get(oldest);
+      this.byId.delete(oldest);
+      if (oldPath !== undefined) this.byPath.delete(oldPath);
+    }
+    return id;
+  }
+
+  pathOf(id: string): string | null {
+    return typeof id === "string" ? (this.byId.get(id) ?? null) : null;
+  }
+}
