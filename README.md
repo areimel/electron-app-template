@@ -6,6 +6,10 @@ Clone it, rename it, delete the demos you do not need, and build your app on wha
 
 Stack: Electron 45, React 19, TypeScript (strict), Vite 8, esbuild for the main process, vitest, pnpm 11. License: MIT.
 
+## Live site
+
+**https://areimel.github.io/electron-app-template/** is the product site, hosted on GitHub Pages. It has a one-command installer for the latest Linux release, the docs and a contact form. Its source is in `website/` (see [Website](#website) below).
+
 ## Requirements
 
 - Node 24 and pnpm 11 (the exact pnpm version is pinned in `package.json`; `corepack enable` provides it).
@@ -101,6 +105,8 @@ pnpm --dir website check
 pnpm --dir website build
 pnpm --dir website test:browser
 ```
+
+Deploy by running the manual **Deploy website** workflow: `gh workflow run website-pages.yml --ref main`. It publishes what is on `main` to GitHub Pages.
 
 ## Guides
 

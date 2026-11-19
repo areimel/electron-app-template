@@ -194,7 +194,23 @@ Full steps: `docs/guides/add-an-app.md`. In short: a folder `renderer/apps/<id>/
 - **Base path.** The site is served under `SITE_BASE` (default `/electron-app-template`, from `deploy.ts`); every link and asset goes through `url()` in `src/config/site.ts`. `SITE_URL` is the origin only.
 - **Forms.** Web3Forms with `PUBLIC_WEB3FORMS_ACCESS_KEY`, a public key by design (it ends up in the HTML). Env only (`website/.env`, gitignored). No key means the forms render as unavailable, and that path is tested. Signup requires consent.
 - **Tests.** `test:browser` builds twice (dummy key with mocked submissions, then no key), uses port 4321 or `PREVIEW_PORT`, and leaves `dist` built without the dummy key.
-- **Deploy** happens only through the manual `workflow_dispatch` of `website-pages.yml`. Fonts: same bundled `@fontsource` packages, no CDN. Screenshots come from the capture harness (`website/public/images/README.md`).
+- **Fonts** use the same bundled `@fontsource` packages, no CDN. Screenshots come from the capture harness (`website/public/images/README.md`).
+
+### Deploy
+
+Live at https://areimel.github.io/electron-app-template/ (GitHub Pages, source "GitHub Actions"). Deploys happen only through a manual run of `.github/workflows/website-pages.yml` ("Deploy website"): pushes and local work never deploy.
+
+```bash
+pnpm --dir website check && pnpm --dir website build      # local gate first
+gh workflow run website-pages.yml --ref main              # deploys what is pushed to main, not the working tree
+gh run list --workflow website-pages.yml -L1              # get the run id
+gh run watch <id> --exit-status                           # build (install, astro check, build) then deploy
+curl -sI https://areimel.github.io/electron-app-template/ # expect 200
+```
+
+- **Repo settings** (already set): Pages `build_type=workflow` (`gh api -X POST repos/areimel/electron-app-template/pages -f build_type=workflow` on a fresh repo), and the Actions secret `PUBLIC_WEB3FORMS_ACCESS_KEY` (`gh secret set`). The Actions variables `SITE_URL` and `SITE_BASE` are unset on purpose: empty values fall back to `deploy.ts`. Set them only when the site moves.
+- **Releases feed the site.** The Download page and `install.sh` read the newest GitHub release and need two assets on it: `electron-app-template_<version>_amd64.deb` and `SHA256SUMS`. To cut one: `pnpm dist`, then `cd release && sha256sum electron-app-template_<version>_amd64.deb > SHA256SUMS`, then `gh release create v<version> release/<deb> release/SHA256SUMS --target main`. A release without `SHA256SUMS` breaks the installer. v0.1.0 is the first.
+- **Browser tests may stall.** `test:browser` runs Playwright with 8 workers on system Chrome, and on this machine every test once timed out after about 3 minutes. If that happens, start `pnpm --dir website exec astro preview --port 4410 --host 127.0.0.1` and run `PREVIEW_PORT=4410 pnpm --dir website exec playwright test --workers 2`, once per build (with `PUBLIC_WEB3FORMS_ACCESS_KEY=test-access-key TEST_FORMS_UNCONFIGURED=0`, and with an empty key and `TEST_FORMS_UNCONFIGURED=1`).
 
 ## Known gaps
 
@@ -205,7 +221,7 @@ Never exercised by a person (tests and capture runs cover the logic and the firs
 - Deep links and the `.md` file association on an installed `.deb` (the association ships commented out in `electron-builder.yml`).
 - The installed `.deb`, and the Windows and macOS builds at all (targets are configured only).
 - Clipboard on Wayland, fullscreen in the Player, theme following a live OS light/dark change, keyboard focus order.
-- Real form delivery on the website (needs a live Web3Forms key).
+- Real form delivery on the website (the live key is set, but no submission has been sent yet), and the installer script run end to end against a release.
 
 Checked once, by machine: `pnpm dist` built `release/electron-app-template_0.1.0_amd64.deb`, and the unpacked build started and rendered the sheet index from the private scheme. The `.deb` itself was not installed.
 
